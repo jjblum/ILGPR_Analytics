@@ -1,0 +1,1 @@
+/usr/bin/c++    -std=c++11    CMakeFiles/ILGPR.dir/ILGPR.cpp.o CMakeFiles/ILGPR.dir/Datum.cpp.o CMakeFiles/ILGPR.dir/LGP.cpp.o CMakeFiles/ILGPR.dir/main.cpp.o CMakeFiles/ILGPR.dir/DatumReceivedFilter.cpp.o CMakeFiles/ILGPR.dir/AnalyticsAgent.cpp.o  -o ILGPR -rdynamic -lACE -lMADARA 

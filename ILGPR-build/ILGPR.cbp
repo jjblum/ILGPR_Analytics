@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+   <FileVersion major="1" minor="6" />
+   <Project>
+      <Option title="ILGPR" />
+      <Option makefile_is_custom="1" />
+      <Option compiler="gcc" />
+      <Option virtualFolders="CMake Files\;" />
+      <Build>
+      <Target title="all">
+         <Option working_dir="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR-build" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 all" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="ILGPR">
+         <Option output="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR-build/ILGPR" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR-build" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/usr/include" />
+            <Add directory="/usr/include/c++/4.9" />
+            <Add directory="/usr/include/c++/4.9/backward" />
+            <Add directory="/usr/include/x86_64-linux-gnu" />
+            <Add directory="/usr/include/x86_64-linux-gnu/c++/4.9" />
+            <Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.9/include" />
+            <Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed" />
+            <Add directory="/usr/local/include" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 ILGPR" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="ILGPR/fast">
+         <Option output="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR-build/ILGPR" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR-build" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/usr/include" />
+            <Add directory="/usr/include/c++/4.9" />
+            <Add directory="/usr/include/c++/4.9/backward" />
+            <Add directory="/usr/include/x86_64-linux-gnu" />
+            <Add directory="/usr/include/x86_64-linux-gnu/c++/4.9" />
+            <Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.9/include" />
+            <Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed" />
+            <Add directory="/usr/local/include" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 ILGPR/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="rebuild_cache">
+         <Option working_dir="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR-build" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 rebuild_cache" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/jazen/Documents/Classes/2015\ Fall/16-831\ Stats\ in\ Robotics/Project/Analytics\ Agent/ILGPR-build/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      </Build>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/AnalyticsAgent.cpp">
+      </Unit>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/Datum.cpp">
+      </Unit>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/DatumReceivedFilter.cpp">
+      </Unit>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/ILGPR.cpp">
+      </Unit>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/LGP.cpp">
+      </Unit>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/main.cpp">
+      </Unit>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/AnalyticsAgent.hpp">
+      </Unit>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/Datum.hpp">
+      </Unit>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/DatumReceivedFilter.hpp">
+      </Unit>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/ILGPR.hpp">
+      </Unit>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/LGP.hpp">
+      </Unit>
+      <Unit filename="/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\" />
+      </Unit>
+   </Project>
+</CodeBlocks_project_file>
