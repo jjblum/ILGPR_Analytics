@@ -9,7 +9,8 @@ enum SENSOR_TYPE {
     TEMP,
     DO,
     DEPTH,
-    FLOW
+    FLOW,
+    UNKNOWN
 };
 
 class Datum {

@@ -6,19 +6,31 @@
 #include "ILGPR.hpp"
 #include "Datum.hpp"
 #include <unordered_map>
+#include <mutex>
+#include <regex>
+
+#include "madara/knowledge/KnowledgeRecord.h"
+
+//typedef madara::knowledge::KnowledgeMap::iterator recordIterator;
+
+
 
 class DatumReceivedFilter: public madara::filters::AggregateFilter {
 
 public:
-    DatumReceivedFilter(std::unordered_map<SENSOR_TYPE, ILGPR, std::hash<int>> *ILGPRs);
+    DatumReceivedFilter(std::unordered_map<SENSOR_TYPE, ILGPR, std::hash<int>> *ILGPRs_In);
 
 private:
+
+    std::unordered_map<SENSOR_TYPE, ILGPR, std::hash<int>> *ILGPRs;
+    SENSOR_TYPE getDatumType(std::string key);
 
     void filter(madara::knowledge::KnowledgeMap &records,
                 const madara::transport::TransportContext &transport_context,
                 madara::knowledge::Variables &vars);
-    ///////////////////////
 
+    std::regex *datumTypeRegex;
+    std::smatch match;
 
 
 };

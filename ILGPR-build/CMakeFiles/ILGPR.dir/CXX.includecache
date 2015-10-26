@@ -23,6 +23,12 @@ Datum.hpp
 /home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/Datum.hpp
 unordered_map
 -
+mutex
+-
+regex
+-
+madara/knowledge/KnowledgeRecord.h
+/home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/madara/knowledge/KnowledgeRecord.h
 
 /home/jazen/Documents/Classes/2015 Fall/16-831 Stats in Robotics/Project/Analytics Agent/ILGPR/ILGPR.hpp
 vector
