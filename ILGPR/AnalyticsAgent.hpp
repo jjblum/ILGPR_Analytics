@@ -9,6 +9,11 @@
 #include "madara/threads/Threader.h"
 #include "madara/transport/QoSTransportSettings.h"
 #include "madara/knowledge/KnowledgeBase.h"
+#include "madara/knowledge/containers/NativeDoubleVector.h"
+
+
+namespace containers = madara::knowledge::containers;
+
 
 #include "LGP.hpp"
 #include "ILGPR.hpp"
@@ -24,9 +29,7 @@ public:
 private:
 
     madara::transport::QoSTransportSettings settings;
-    //std::unique_ptr<DatumReceivedFilter> dataFilter;
-    //DatumReceivedFilter dataFilter;
-    DatumReceivedFilter *dataFilter;
+    DatumReceivedFilter *dataFilter; // is it possible to use C++11 pointers?
     madara::knowledge::KnowledgeBase knowledge;
     const std::string KNOWLEDGEBASE_NAME = std::string("analytics");
 

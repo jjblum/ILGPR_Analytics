@@ -7,6 +7,10 @@ DatumReceivedFilter::DatumReceivedFilter(std::unordered_map<SENSOR_TYPE, ILGPR, 
 
 }
 
+void DatumReceivedFilter::setKB(madara::knowledge::KnowledgeBase *knowledgeIn) {
+    knowledge = knowledgeIn;
+}
+
 void DatumReceivedFilter::filter(madara::knowledge::KnowledgeMap &records,
                                  const madara::transport::TransportContext &transport_context,
                                  madara::knowledge::Variables &vars) {
@@ -16,14 +20,22 @@ void DatumReceivedFilter::filter(madara::knowledge::KnowledgeMap &records,
     std::string typeString;
     SENSOR_TYPE type;
     double value;
+
+    /*
+     * STRATEGY: IF WE CAN GET THE PREFIX FOR THE SENDING DEVICE, YOU CAN USE CONTAINERS TO EASILY HANDLE THE REST OF THE DATA
+     *           (assuming that all the info from the packet made it...
+    */
+
+
+    // change to madara::utility::begins_with
     for (auto const &iter : records) {
         std::string key = iter.first;
-        if (key.find("environmentalData")) {
-            if (key.find("type")) {
+        if (key.find("environmentalData")) { // we at least know it is some environmentalData packet
+            if (key.find("type")) { // type of sensor
                 typeString = iter.second.to_string();
                 type = getDatumType(typeString);
             }
-            if (key.find("value")) {
+            if (key.find("value")) { // value of the sensor --> this may or may not be a scalar, need to check for "size"
                 value = iter.second.to_double();
             }
         }

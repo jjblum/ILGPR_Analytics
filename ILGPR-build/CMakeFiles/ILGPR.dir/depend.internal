@@ -1747,6 +1747,7 @@ CMakeFiles/ILGPR.dir/AnalyticsAgent.cpp.o
  /usr/local/include/madara/knowledge/containers/BaseContainer.inl
  /usr/local/include/madara/knowledge/containers/Integer.h
  /usr/local/include/madara/knowledge/containers/Integer.inl
+ /usr/local/include/madara/knowledge/containers/NativeDoubleVector.h
  /usr/local/include/madara/logger/GlobalLogger.h
  /usr/local/include/madara/logger/Logger.h
  /usr/local/include/madara/logger/Logger.inl
@@ -2191,21 +2192,50 @@ CMakeFiles/ILGPR.dir/DatumReceivedFilter.cpp.o
  /usr/local/include/Eigen/src/plugins/MatrixCwiseBinaryOps.h
  /usr/local/include/Eigen/src/plugins/MatrixCwiseUnaryOps.h
  /usr/local/include/ace/ACE_export.h
+ /usr/local/include/ace/Addr.h
+ /usr/local/include/ace/Addr.inl
  /usr/local/include/ace/Argv_Type_Converter.h
  /usr/local/include/ace/Argv_Type_Converter.inl
  /usr/local/include/ace/Assert.h
+ /usr/local/include/ace/Auto_Event.cpp
+ /usr/local/include/ace/Auto_Event.h
+ /usr/local/include/ace/Auto_Event.inl
+ /usr/local/include/ace/Barrier.h
+ /usr/local/include/ace/Barrier.inl
  /usr/local/include/ace/Base_Thread_Adapter.h
  /usr/local/include/ace/Base_Thread_Adapter.inl
  /usr/local/include/ace/Basic_Types.h
  /usr/local/include/ace/Cleanup.h
  /usr/local/include/ace/Cleanup.inl
+ /usr/local/include/ace/Condition_Attributes.h
+ /usr/local/include/ace/Condition_Attributes.inl
+ /usr/local/include/ace/Condition_Recursive_Thread_Mutex.h
+ /usr/local/include/ace/Condition_T.cpp
+ /usr/local/include/ace/Condition_T.h
+ /usr/local/include/ace/Condition_T.inl
+ /usr/local/include/ace/Condition_Thread_Mutex.h
+ /usr/local/include/ace/Condition_Thread_Mutex.inl
+ /usr/local/include/ace/Copy_Disabled.h
  /usr/local/include/ace/Default_Constants.h
+ /usr/local/include/ace/Event.cpp
+ /usr/local/include/ace/Event.h
+ /usr/local/include/ace/Event.inl
+ /usr/local/include/ace/Event_Base.h
+ /usr/local/include/ace/Event_Base.inl
+ /usr/local/include/ace/Flag_Manip.h
+ /usr/local/include/ace/Flag_Manip.inl
  /usr/local/include/ace/Global_Macros.h
  /usr/local/include/ace/Guard_T.cpp
  /usr/local/include/ace/Guard_T.h
  /usr/local/include/ace/Guard_T.inl
  /usr/local/include/ace/Handle_Set.h
  /usr/local/include/ace/Handle_Set.inl
+ /usr/local/include/ace/High_Res_Timer.h
+ /usr/local/include/ace/High_Res_Timer.inl
+ /usr/local/include/ace/INET_Addr.h
+ /usr/local/include/ace/INET_Addr.inl
+ /usr/local/include/ace/IPC_SAP.h
+ /usr/local/include/ace/IPC_SAP.inl
  /usr/local/include/ace/If_Then_Else.h
  /usr/local/include/ace/Intrusive_List.cpp
  /usr/local/include/ace/Intrusive_List.h
@@ -2220,7 +2250,17 @@ CMakeFiles/ILGPR.dir/DatumReceivedFilter.cpp.o
  /usr/local/include/ace/Log_Msg.h
  /usr/local/include/ace/Log_Msg.inl
  /usr/local/include/ace/Log_Priority.h
+ /usr/local/include/ace/Manual_Event.cpp
+ /usr/local/include/ace/Manual_Event.h
+ /usr/local/include/ace/Manual_Event.inl
+ /usr/local/include/ace/Mem_Map.h
+ /usr/local/include/ace/Mem_Map.inl
+ /usr/local/include/ace/Mutex.h
+ /usr/local/include/ace/Mutex.inl
+ /usr/local/include/ace/Null_Barrier.h
+ /usr/local/include/ace/Null_Condition.h
  /usr/local/include/ace/Null_Mutex.h
+ /usr/local/include/ace/Null_Semaphore.h
  /usr/local/include/ace/Numeric_Limits.h
  /usr/local/include/ace/OS_Errno.h
  /usr/local/include/ace/OS_Errno.inl
@@ -2229,6 +2269,8 @@ CMakeFiles/ILGPR.dir/DatumReceivedFilter.cpp.o
  /usr/local/include/ace/OS_Memory.h
  /usr/local/include/ace/OS_NS_Thread.h
  /usr/local/include/ace/OS_NS_Thread.inl
+ /usr/local/include/ace/OS_NS_arpa_inet.h
+ /usr/local/include/ace/OS_NS_arpa_inet.inl
  /usr/local/include/ace/OS_NS_errno.h
  /usr/local/include/ace/OS_NS_errno.inl
  /usr/local/include/ace/OS_NS_fcntl.h
@@ -2244,14 +2286,20 @@ CMakeFiles/ILGPR.dir/DatumReceivedFilter.cpp.o
  /usr/local/include/ace/OS_NS_stdlib.inl
  /usr/local/include/ace/OS_NS_string.h
  /usr/local/include/ace/OS_NS_string.inl
+ /usr/local/include/ace/OS_NS_stropts.h
+ /usr/local/include/ace/OS_NS_stropts.inl
  /usr/local/include/ace/OS_NS_sys_mman.h
  /usr/local/include/ace/OS_NS_sys_mman.inl
  /usr/local/include/ace/OS_NS_sys_select.h
  /usr/local/include/ace/OS_NS_sys_select.inl
+ /usr/local/include/ace/OS_NS_sys_socket.h
+ /usr/local/include/ace/OS_NS_sys_socket.inl
  /usr/local/include/ace/OS_NS_sys_stat.h
  /usr/local/include/ace/OS_NS_sys_stat.inl
  /usr/local/include/ace/OS_NS_sys_time.h
  /usr/local/include/ace/OS_NS_sys_time.inl
+ /usr/local/include/ace/OS_NS_sys_uio.h
+ /usr/local/include/ace/OS_NS_sys_uio.inl
  /usr/local/include/ace/OS_NS_sys_utsname.h
  /usr/local/include/ace/OS_NS_time.h
  /usr/local/include/ace/OS_NS_time.inl
@@ -2259,6 +2307,7 @@ CMakeFiles/ILGPR.dir/DatumReceivedFilter.cpp.o
  /usr/local/include/ace/OS_NS_unistd.inl
  /usr/local/include/ace/OS_NS_wchar.h
  /usr/local/include/ace/OS_NS_wchar.inl
+ /usr/local/include/ace/OS_QoS.h
  /usr/local/include/ace/OS_main.h
  /usr/local/include/ace/Object_Manager_Base.h
  /usr/local/include/ace/RW_Mutex.h
@@ -2267,11 +2316,27 @@ CMakeFiles/ILGPR.dir/DatumReceivedFilter.cpp.o
  /usr/local/include/ace/RW_Thread_Mutex.inl
  /usr/local/include/ace/Recursive_Thread_Mutex.h
  /usr/local/include/ace/Recursive_Thread_Mutex.inl
+ /usr/local/include/ace/SOCK.h
+ /usr/local/include/ace/SOCK.inl
+ /usr/local/include/ace/SOCK_Dgram.h
+ /usr/local/include/ace/SOCK_Dgram.inl
+ /usr/local/include/ace/Semaphore.h
+ /usr/local/include/ace/Semaphore.inl
+ /usr/local/include/ace/Sock_Connect.h
+ /usr/local/include/ace/Synch.h
  /usr/local/include/ace/Synch_Traits.h
+ /usr/local/include/ace/TSS_Adapter.h
  /usr/local/include/ace/Thread_Mutex.h
  /usr/local/include/ace/Thread_Mutex.inl
+ /usr/local/include/ace/Thread_Semaphore.h
+ /usr/local/include/ace/Thread_Semaphore.inl
+ /usr/local/include/ace/Time_Policy.h
+ /usr/local/include/ace/Time_Policy.inl
  /usr/local/include/ace/Time_Value.h
  /usr/local/include/ace/Time_Value.inl
+ /usr/local/include/ace/Time_Value_T.cpp
+ /usr/local/include/ace/Time_Value_T.h
+ /usr/local/include/ace/Time_Value_T.inl
  /usr/local/include/ace/Trace.h
  /usr/local/include/ace/Truncate.h
  /usr/local/include/ace/Version.h
@@ -2290,6 +2355,7 @@ CMakeFiles/ILGPR.dir/DatumReceivedFilter.cpp.o
  /usr/local/include/ace/config.h
  /usr/local/include/ace/iosfwd.h
  /usr/local/include/ace/os_include/arpa/os_inet.h
+ /usr/local/include/ace/os_include/net/os_if.h
  /usr/local/include/ace/os_include/netinet/os_in.h
  /usr/local/include/ace/os_include/os_ctype.h
  /usr/local/include/ace/os_include/os_errno.h
@@ -3489,28 +3555,63 @@ CMakeFiles/ILGPR.dir/DatumReceivedFilter.cpp.o
  /usr/local/include/gp/sampleset.h
  /usr/local/include/madara/LockType.h
  /usr/local/include/madara/MADARA_export.h
+ /usr/local/include/madara/cid/CIDConvenience.h
+ /usr/local/include/madara/cid/CIDGenetic.h
+ /usr/local/include/madara/cid/CIDHeuristic.h
+ /usr/local/include/madara/cid/CIDSettings.h
  /usr/local/include/madara/expression/ComponentNode.h
  /usr/local/include/madara/expression/ExpressionTree.h
+ /usr/local/include/madara/expression/Interpreter.h
  /usr/local/include/madara/filters/AggregateFilter.h
+ /usr/local/include/madara/filters/Arguments.h
+ /usr/local/include/madara/filters/BufferFilter.h
  /usr/local/include/madara/filters/RecordFilter.h
+ /usr/local/include/madara/knowledge/AggregateFilter.h
  /usr/local/include/madara/knowledge/CompiledExpression.h
+ /usr/local/include/madara/knowledge/EvalSettings.h
  /usr/local/include/madara/knowledge/ExternFunctionVariables.h
+ /usr/local/include/madara/knowledge/Files.h
  /usr/local/include/madara/knowledge/FunctionArguments.h
+ /usr/local/include/madara/knowledge/FunctionMap.h
  /usr/local/include/madara/knowledge/Functions.h
+ /usr/local/include/madara/knowledge/KnowledgeBase.h
+ /usr/local/include/madara/knowledge/KnowledgeBase.inl
+ /usr/local/include/madara/knowledge/KnowledgeBaseImpl.h
+ /usr/local/include/madara/knowledge/KnowledgeBaseImpl.inl
  /usr/local/include/madara/knowledge/KnowledgeRecord.h
  /usr/local/include/madara/knowledge/KnowledgeRecord.inl
+ /usr/local/include/madara/knowledge/KnowledgeRecordFilters.h
  /usr/local/include/madara/knowledge/KnowledgeReferenceSettings.h
  /usr/local/include/madara/knowledge/KnowledgeUpdateSettings.h
+ /usr/local/include/madara/knowledge/ThreadSafeContext.h
+ /usr/local/include/madara/knowledge/ThreadSafeContext.inl
  /usr/local/include/madara/knowledge/VariableReference.h
+ /usr/local/include/madara/knowledge/WaitSettings.h
  /usr/local/include/madara/logger/GlobalLogger.h
  /usr/local/include/madara/logger/Logger.h
  /usr/local/include/madara/logger/Logger.inl
+ /usr/local/include/madara/transport/BandwidthMonitor.h
+ /usr/local/include/madara/transport/BandwidthMonitor.inl
+ /usr/local/include/madara/transport/Fragmentation.h
+ /usr/local/include/madara/transport/MessageHeader.h
+ /usr/local/include/madara/transport/PacketScheduler.h
+ /usr/local/include/madara/transport/QoSTransportSettings.h
+ /usr/local/include/madara/transport/ReducedMessageHeader.h
+ /usr/local/include/madara/transport/Transport.h
+ /usr/local/include/madara/transport/Transport.inl
  /usr/local/include/madara/transport/TransportContext.h
  /usr/local/include/madara/transport/TransportContext.inl
+ /usr/local/include/madara/transport/TransportSettings.h
  /usr/local/include/madara/utility/Refcounter.cpp
  /usr/local/include/madara/utility/Refcounter.h
  /usr/local/include/madara/utility/ScopedArray.h
  /usr/local/include/madara/utility/ScopedArray.inl
+ /usr/local/include/madara/utility/ThreadSafeRefcounter.cpp
+ /usr/local/include/madara/utility/ThreadSafeRefcounter.h
+ /usr/local/include/madara/utility/ThreadSafeVector.cpp
+ /usr/local/include/madara/utility/ThreadSafeVector.h
+ /usr/local/include/madara/utility/Utility.h
+ /usr/local/include/madara/utility/Utility.inl
  /usr/local/include/madara/utility/inttypes.h
  /usr/local/include/madara/utility/stdint.h
 CMakeFiles/ILGPR.dir/ILGPR.cpp.o
@@ -5679,6 +5780,7 @@ CMakeFiles/ILGPR.dir/main.cpp.o
  /usr/local/include/madara/knowledge/containers/BaseContainer.inl
  /usr/local/include/madara/knowledge/containers/Integer.h
  /usr/local/include/madara/knowledge/containers/Integer.inl
+ /usr/local/include/madara/knowledge/containers/NativeDoubleVector.h
  /usr/local/include/madara/logger/GlobalLogger.h
  /usr/local/include/madara/logger/Logger.h
  /usr/local/include/madara/logger/Logger.inl

@@ -52,3 +52,19 @@ int main(int argc, char** argv)
     return 0;
 }
 
+/*
+ * Transport settings NoSending, NoReceiving
+ * Network shaping in a multiagent USV system using Madara and GAMS middleware
+ * middleware for multiagent systems
+ * experimental results comparing the other middleware
+ * 3G/4G enabled multi-agent field + cloud systems -- related work: rosbridge (JSON universal interface for ROS)
+ *              erle spider with cloud based apps
+ *              Fly4SmartCity ODOMI, use drones to map 3G/4G
+ *
+ * ****** LINES OF CODE REQUIRED BY PLATYPUS TO USE 3G WITH THEIR MANUAL UDP SETUPS
+ *         vs. lines of code required for Madara
+ *
+ * Show the relative difficulty of previous platypus set up vs. new madara set up
+ *
+ * */
+

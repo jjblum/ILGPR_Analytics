@@ -10,18 +10,20 @@
 #include <regex>
 
 #include "madara/knowledge/KnowledgeRecord.h"
+#include "madara/knowledge/KnowledgeBase.h"
+
 
 //typedef madara::knowledge::KnowledgeMap::iterator recordIterator;
-
-
 
 class DatumReceivedFilter: public madara::filters::AggregateFilter {
 
 public:
     DatumReceivedFilter(std::unordered_map<SENSOR_TYPE, ILGPR, std::hash<int>> *ILGPRs_In);
+    void setKB(madara::knowledge::KnowledgeBase *knowledgeIn);
 
 private:
 
+    madara::knowledge::KnowledgeBase *knowledge;
     std::unordered_map<SENSOR_TYPE, ILGPR, std::hash<int>> *ILGPRs;
     SENSOR_TYPE getDatumType(std::string key);
 
