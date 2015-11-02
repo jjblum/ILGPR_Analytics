@@ -45,12 +45,17 @@ load('./map_0001')
 % set(gca, 'FontSize', 14)
 
 %% APPLY ILGPR TO APPROXIMATE THE A PRIORI FULL GP
-N = 100;
-Xz = 10*gpml_randn(rand(1), N, 2);
-ilgpr = ILGPR();
+N = 100; % maximum number of sample locations
+Xz = 10*gpml_randn(rand(1), N, 2)'; % predetermined random set of sample locations, note that each X is a column vector
+predictionX = heatmap(:,1:2)'; % note that each X is a column vector
+predictionZ = zeros(size(predictionX,1),1); % assume value is 0
+predictionS = 10*ones(size(predictionX,1),1); % assume +/- 10
+ilgpr = ILGPR(predictionX,predictionZ,predictionS); % the ILGPR object
 for j = 1:N
 %     z = interp2(X,Y,heatmap_grid,min(X(:)) + rand(1)*(max(X(:))-min(X(:))),min(Y(:)) + rand(1)*(max(Y(:))-min(Y(:))));
-    x = Xz(j,:)';
-    a = LGP();
+    x = Xz(:,j);
+%     z = interp1(
+    datum = Datum(x,z,j);
+    ilgpr.newDatum(datum);
 
 end

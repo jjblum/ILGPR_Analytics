@@ -7,7 +7,7 @@ classdef LGP < handle
     
     properties
         X        % data locations matrix
-        y        % data value vector
+        Z        % data value vector
         W        % length scale matrix
         hyp      % vector of log(hyperparameters)
         u        % center location
@@ -26,9 +26,9 @@ classdef LGP < handle
     end
     
     methods
-        function obj = LGP(xFirst, yFirst)
-                obj.X = xFirst;
-                obj.y = yFirst;
+        function obj = LGP(Datum)
+                obj.X = Datum.getX();
+                obj.Z = Datum.getZ();
                 obj.hyp = [log(15) log(15) log(1)]; % log(length 1), log(length 2), log(process variability)
                 obj.W = diag([15^2 15^2]);
                 obj.u = xFirst;
@@ -41,30 +41,29 @@ classdef LGP < handle
                 obj.started = 0;
                 obj.sp = 1;
                 obj.data = cell(1,1);
+                obj.mc = 0;
+                obj.f = 0;
         end
         
         function newDatum(self,Datum)
-            
+            self.N = self.N + 1;
+            self.data{N} = Datum;
         end
         
         function updateX(self, x)
             self.X = horzcat(self.X,x);
-            self.N = self.N + 1;
+            
         end
         
         function updateY(self, ynew)
             self.y = vertcat(self.y,ynew);
-        end
-        
-        function isStarted(self)
-            self.started = ~(self.N < self.NSTART);
-        end
+        end       
         
         function getR(self, m)
             % m = index of value being replaced in covariance matrix
         end
         
-        function updateCenter(self, x)
+        function updateCenter(self, x, posterior)
             
         end
         
