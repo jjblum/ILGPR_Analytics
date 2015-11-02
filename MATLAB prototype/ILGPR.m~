@@ -12,7 +12,7 @@ classdef ILGPR < handle
         predictionS % std dev. at prediction X
         spSum % sum of LGP's activations
         mcfSum % sum of mixture components
-        newLGPCutoff % likelihood below which a new LGP will be added
+        newModelCutoff % likelihood below which a new LGP will be added
     end
     
     methods
@@ -23,7 +23,7 @@ classdef ILGPR < handle
             obj.predictionZ = predictionZ;
             obj.predictionS = predictionS;
             obj.spSum = 0;
-            obj.newLGPCutoff = 0.1;
+            obj.newModelCutoff = 0.1;
         end
         
         function newDatum(self,Datum)
@@ -37,26 +37,15 @@ classdef ILGPR < handle
                     self.LGPs{i}.updateF(Datum.getX());
                     likelihoods(i) = self.LGPs{i}.getF();
                 end
-                
-                if min(likelihoods) > self.newLGPCutoff
-                    updateMCFSum();
-                    for i = 1:self.nLGPs
-                        posterior = self.LGPs{i}.getMC()*self.LGPs{i}.getF()/self.mcfSum;
-                        self.LGPs{i}.updateSP(posterior);
-                    end
-                else
-                    addLGP(Datum);
-                end
-                
+                updateMCFSum();
+                posterior = self.LGPs{i}.getMC()*self.LGPs{i}.F()/self.mcfSum;
             else
                 addLGP(Datum);
             end
-            updateMCs();
         end
         
         function addLGP(self,Datum)
             self.nLGPs = self.nLGPs + 1;
-            
             
         end        
         
@@ -66,8 +55,8 @@ classdef ILGPR < handle
         
         function updateMCs(self)
             updateSPSum();
-            for i = 1:self.nLGPs
-                self.LGPs{i}.setMC(self.LGPs{i}.getSP()/self.spSum);
+            for i = 1:nLGPs,1)
+                self.LGPs{i}.setMC(self.LGPs{i}.getSP/self.spSum);
             end               
         end
         

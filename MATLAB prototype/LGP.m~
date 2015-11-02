@@ -88,10 +88,6 @@ classdef LGP < handle
             self.K = covSEard(self.hyp,self.X);
         end
         
-        function updateSP(self, p)
-            self.sp = self.sp + p;
-        end
-        
         function sp = getSP(self)
             sp = self.sp;
         end
@@ -104,12 +100,13 @@ classdef LGP < handle
             mc = self.mc;
         end
         
-        function f = getF(self)
+        function f = getLikelihood(self,x)
             f = self.f;
+%             f = exp(-1/2*(x-self.u)'*self.W\(x-self.u));
         end
         
-        function updateF(self,x)
-            self.f = exp(-1/2*(x-self.u)'*self.W\(x-self.u));
+        function updateF(x)
+            
         end
     end
     
