@@ -23,7 +23,7 @@ classdef ILGPR < handle
             obj.predictionZ = predictionZ;
             obj.predictionS = predictionS;
             obj.spSum = 0;
-            obj.newLGPCutoff = 0.1;
+            obj.newLGPCutoff = 0.5; % if the best LGP has nothing better than a 50/50 shot, generate a new LGP
         end       
         
         function newDatum(self,Datum)
@@ -39,7 +39,7 @@ classdef ILGPR < handle
                 [maxLikelihood,bestLGPIdx] = max(likelihoods);
                                 
                 if maxLikelihood > self.newLGPCutoff
-                    updateMCFSum(); % update sum of mixture coefficient*likelihood, used to find the posterior
+                    updateMCFSum(self); % update sum of mixture coefficient*likelihood, used to find the posterior
                     
                     % calculate posterior for all LGPs
                     posteriors = zeros(self.nLGPs,1);
@@ -48,26 +48,26 @@ classdef ILGPR < handle
                         posteriors(i) = posterior;
                         self.LGPs{i}.updateSP(posterior);
                     end
-                    updateMCs();
-                    updateCenters(Datum,posteriors);
+                    updateMCs(self);                                        
+                    updateCenters(self,Datum,posteriors);
                     
                     % add Datum to LGP with maximum likelihood (not max posterior)                    
                     self.LGPs{bestLGPIdx}.newDatum(Datum);
                     
                 else % the max likelihood is too small, need new LGP 
-                    addLGP(Datum);
-                    updateMCs();
+                    addLGP(self,Datum);
+                    updateMCs(self);
                 end
                 
             else % the first LGP
-                addLGP(Datum);
-                updateMCs();
+                addLGP(self,Datum);
+                updateMCs(self);
             end            
         end
         
         function addLGP(self,Datum)
             self.nLGPs = self.nLGPs + 1;
-            newLGP = LGP(Datum);
+            newLGP = LGP(Datum);            
             self.LGPs{self.nLGPs} = newLGP;
         end        
         
@@ -76,13 +76,13 @@ classdef ILGPR < handle
         end
         
         function updateCenters(self,Datum,posteriors)
-            for i = 1:self.nLPGs
-                self.LPGs{i}.updateCenter(Datum.getX(),posteriors(i));
+            for i = 1:self.nLGPs
+                self.LGPs{i}.updateCenter(Datum.getX(),posteriors(i));
             end
         end
         
         function updateMCs(self)
-            updateSPSum();
+            updateSPSum(self);
             for i = 1:self.nLGPs
                 self.LGPs{i}.setMC(self.LGPs{i}.getSP()/self.spSum);
             end               

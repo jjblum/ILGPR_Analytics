@@ -46,15 +46,18 @@ load('./map_0001')
 
 %% APPLY ILGPR TO APPROXIMATE THE A PRIORI FULL GP
 N = 100; % maximum number of sample locations
-Xz = 10*gpml_randn(rand(1), N, 2)'; % predetermined random set of sample locations, note that each X is a column vector
+Xz = 20+5*gpml_randn(rand(1), N, 2)'; % predetermined random set of sample locations, note that each X is a column vector
+Xz(Xz > 40) = 40;
+Xz(Xz < 1) = 1;
 predictionX = heatmap(:,1:2)'; % note that each X is a column vector
 predictionZ = zeros(size(predictionX,1),1); % assume value is 0
 predictionS = 10*ones(size(predictionX,1),1); % assume +/- 10
 ilgpr = ILGPR(predictionX,predictionZ,predictionS); % the ILGPR object
+myInterpolant = griddedInterpolant(X,Y,heatmap_grid,'cubic');
 for j = 1:N
 %     z = interp2(X,Y,heatmap_grid,min(X(:)) + rand(1)*(max(X(:))-min(X(:))),min(Y(:)) + rand(1)*(max(Y(:))-min(Y(:))));
     x = Xz(:,j);
-%     z = interp1(
+    z = myInterpolant(x(1),x(2));
     datum = Datum(x,z,j);
     ilgpr.newDatum(datum);
 

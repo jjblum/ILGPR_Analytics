@@ -29,11 +29,11 @@ classdef LGP < handle
         function obj = LGP(Datum)
                 obj.X = Datum.getX();
                 obj.Z = Datum.getZ();
-                obj.hyp = [log(15) log(15) log(1)]; % log(length 1), log(length 2), log(process variability)
+                obj.hyp = [log(2) log(2) log(1)]; % log(length scale 1), log(length scale 2), log(process variability)
                 obj.W = diag([15^2 15^2]);
-                obj.u = xFirst;
+                obj.u = Datum.getX();
                 obj.R = [];
-                obj.K = covSEard(obj.hyp,obj.X,obj.y); % K = covSEard(hyp, x, z, i)                
+                obj.K = covSEard(obj.hyp,obj.X); % K = covSEard(hyp, x, z, i)                
                 obj.L = chol(obj.K,'lower');
                 obj.N = 1;
                 obj.NMAX = 50;
@@ -41,13 +41,15 @@ classdef LGP < handle
                 obj.started = 0;
                 obj.sp = 1;
                 obj.data = cell(1,1);
+                obj.data{1} = Datum;
                 obj.mc = 0;
                 obj.f = 0;
         end
         
         function newDatum(self,Datum)
             self.N = self.N + 1;
-            self.data{N} = Datum;
+            self.data{self.N} = Datum;
+            choleskyUpdate(self);
         end
         
         function updateX(self, x)
@@ -64,21 +66,32 @@ classdef LGP < handle
         end
         
         function updateCenter(self, x, posterior)
-            
+            keyboard
+            self.u = self.u + posterior/self.sp*(x - self.u);
         end
         
         function choleskyUpdate(self)
+            
+            keyboard
+            
             if self.N < self.NSTART
                 return;
-            elseif self.N == self.NSTART                
-                firstCholesky();
+            elseif self.N == self.NSTART
+                firstCholesky(self);
+            elseif self.N > self.NMAX
+                % the incremental cholesky update
             else
                 
             end
         end
         
+        function incrementalCholeskyUpdate(self)
+            
+        end
+        
         function firstCholesky(self)
-            firstK();
+            keyboard
+            firstK(self);
             self.L = chol(self.K,'lower');
             self.LT = self.L';
         end
@@ -108,7 +121,8 @@ classdef LGP < handle
         end
         
         function updateF(self,x)
-            self.f = exp(-1/2*(x-self.u)'*self.W\(x-self.u));
+            keyboard
+            self.f = exp(-1/2*(x-self.u)'*(self.W\(x-self.u)));
         end
     end
     
