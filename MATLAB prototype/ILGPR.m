@@ -23,7 +23,7 @@ classdef ILGPR < handle
             obj.predictionZ = predictionZ;
             obj.predictionS = predictionS;
             obj.spSum = 0;
-            obj.newLGPCutoff = 0.5; % if the best LGP has nothing better than a 50/50 shot, generate a new LGP
+            obj.newLGPCutoff = 0.4; % if the best LGP has nothing better than a 50/50 shot, generate a new LGP
         end       
         
         function newDatum(self,Datum)
@@ -67,7 +67,7 @@ classdef ILGPR < handle
         
         function addLGP(self,Datum)
             self.nLGPs = self.nLGPs + 1;
-            newLGP = LGP(Datum);            
+            newLGP = LGP(self.nLGPs,Datum);            
             self.LGPs{self.nLGPs} = newLGP;
         end        
         
@@ -90,15 +90,15 @@ classdef ILGPR < handle
         
         function updateSPSum(self)
             self.spSum = 0;
-            for i = 1:size(self.LGPs,1)
+            for i = 1:self.nLGPs
                 self.spSum = self.spSum + self.LGPs{i}.getSP();
             end            
         end
         
-        function updateMCFSum(self, x)
+        function updateMCFSum(self)
             self.mcfSum = 0;
-            for i = 1:size(self.LGPs,1)
-                self.mcfSum = self.LGPs{i}.getMC()*self.LGPs{i}.getF();
+            for i = 1:self.nLGPs
+                self.mcfSum = self.mcfSum + self.LGPs{i}.getMC()*self.LGPs{i}.getF();
             end
         end
         

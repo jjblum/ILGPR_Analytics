@@ -14,7 +14,7 @@ classdef LGP < handle
         L        % lower triangular (Cholesky) decomp of K
         LT       % transpose of lower triangular decomp of K (saved so you don't need to recompute)
         R        % permutation matrix
-        K        % covariance matrix   
+        K        % covariance matrix
         N        % number of training points
         NMAX     % maximum number of training points
         NSTART   % number of points needed before computation actually begins
@@ -23,32 +23,41 @@ classdef LGP < handle
         mc       % mixture coefficient (pi in the paper)
         data     % vector of Datum objects
         f        % most recent likelihood result
+        ID       % the index of the LGP itself (order of creation)
     end
     
     methods
-        function obj = LGP(Datum)
-                obj.X = Datum.getX();
-                obj.Z = Datum.getZ();
-                obj.hyp = [log(2) log(2) log(1)]; % log(length scale 1), log(length scale 2), log(process variability)
-                obj.W = diag([15^2 15^2]);
-                obj.u = Datum.getX();
-                obj.R = [];
-                obj.K = covSEard(obj.hyp,obj.X); % K = covSEard(hyp, x, z, i)                
-                obj.L = chol(obj.K,'lower');
-                obj.N = 1;
-                obj.NMAX = 50;
-                obj.NSTART = 5;
-                obj.started = 0;
-                obj.sp = 1;
-                obj.data = cell(1,1);
-                obj.data{1} = Datum;
-                obj.mc = 0;
-                obj.f = 0;
+        function obj = LGP(ID,Datum)
+            
+%             keyboard
+            obj.ID = ID;
+            obj.X = Datum.getX();
+            obj.Z = Datum.getZ();
+            obj.hyp = [log(5) log(5) log(1)]; % log(length scale 1), log(length scale 2), log(process variability)
+            obj.W = diag((1./exp(obj.hyp(1:2))).^2);
+            obj.u = Datum.getX();
+            obj.R = [];
+%             obj.K = covSEard(obj.hyp,obj.X'); % K = covSEard(hyp, x, z, i) - note that each datum x is a ROW, not a column
+%             obj.L = chol(obj.K,'lower');
+            %                 obj.K = [];
+            %                 obj.L = [];
+            obj.LT = [];
+            obj.N = 1;
+            obj.NMAX = 50;
+            obj.NSTART = 5;
+            obj.started = 0;
+            obj.sp = 1;
+            obj.data = cell(1,1);
+            obj.data{1} = Datum;
+            obj.mc = 0;
+            obj.f = 0;
         end
         
         function newDatum(self,Datum)
             self.N = self.N + 1;
             self.data{self.N} = Datum;
+            updateX(self,Datum.getX());
+            updateZ(self,Datum.getZ());
             choleskyUpdate(self);
         end
         
@@ -57,31 +66,31 @@ classdef LGP < handle
             
         end
         
-        function updateY(self, ynew)
-            self.y = vertcat(self.y,ynew);
-        end       
+        function updateZ(self, z)
+            self.Z = vertcat(self.Z,z);
+        end
         
         function getR(self, m)
             % m = index of value being replaced in covariance matrix
         end
         
         function updateCenter(self, x, posterior)
-            keyboard
+%             keyboard
             self.u = self.u + posterior/self.sp*(x - self.u);
         end
         
         function choleskyUpdate(self)
             
-            keyboard
+%             keyboard
             
             if self.N < self.NSTART
                 return;
             elseif self.N == self.NSTART
                 firstCholesky(self);
             elseif self.N > self.NMAX
-                % the incremental cholesky update
+                % the incremental cholesky update with removal
             else
-                
+                % the incremental cholesky update without removal
             end
         end
         
@@ -90,14 +99,15 @@ classdef LGP < handle
         end
         
         function firstCholesky(self)
-            keyboard
+%             keyboard
             firstK(self);
             self.L = chol(self.K,'lower');
             self.LT = self.L';
         end
         
         function firstK(self)
-            self.K = covSEard(self.hyp,self.X);
+            keyboard
+            self.K = covSEard(self.hyp,self.X');
         end
         
         function updateSP(self, p)
@@ -121,8 +131,12 @@ classdef LGP < handle
         end
         
         function updateF(self,x)
-            keyboard
-            self.f = exp(-1/2*(x-self.u)'*(self.W\(x-self.u)));
+%             keyboard
+            % ratio = norm(x-self.u)*sqrt(self.W(1,1))
+            % rough_f = exp(-1/2*ratio)
+            self.f = exp(-1/2*(x-self.u)'*self.W*(x-self.u)); 
+            % approximately exp(-1/2*[ratio of squared distance to squared length scale]). e.g. if ratio is 5, f ~ 0.1
+            % So if we want a new LGP when more than 2*length scale away, need to set cutoff to about 0.4
         end
     end
     
