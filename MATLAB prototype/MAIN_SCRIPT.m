@@ -55,10 +55,8 @@ predictionS = 10*ones(size(predictionX,1),1); % assume +/- 10
 ilgpr = ILGPR(predictionX,predictionZ,predictionS); % the ILGPR object
 myInterpolant = griddedInterpolant(X,Y,heatmap_grid,'cubic');
 for j = 1:N
-%     z = interp2(X,Y,heatmap_grid,min(X(:)) + rand(1)*(max(X(:))-min(X(:))),min(Y(:)) + rand(1)*(max(Y(:))-min(Y(:))));
     x = Xz(:,j);
     z = myInterpolant(x(1),x(2));
     datum = Datum(x,z,j);
     ilgpr.newDatum(datum);
-
 end

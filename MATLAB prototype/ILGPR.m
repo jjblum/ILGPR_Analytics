@@ -71,13 +71,57 @@ classdef ILGPR < handle
             self.LGPs{self.nLGPs} = newLGP;
         end        
         
-        function prediction(self)
+        function weightedZ = predict(self,x)       
+            atLeastOneStarted = 0;
+            for j=1:self.nLGPs
+                if self.LGPs{j}.isStarted()
+                    atLeastOneStarted = 1;
+                    break;
+                end
+            end
+            if ~atLeastOneStarted
+                disp('WARNING: No started LGPs available for prediction');
+                return;
+            end
             
+            self.updateStartedLGPMCs();
+            self.mcfSum = 0;
+            for j=1:self.nLGPs                
+                if self.LGPs{j}.isStarted()
+                    self.LGPs{j}.updateF(x);
+                    self.mcfSum = self.mcfSum + self.LGPs{j}.getMC()*self.LGPs{j}.getF();
+                end
+            end
+            
+            weightedZ = 0;
+            for j=1:self.nLGPs
+                if self.LGPs{j}.isStarted() % only want to use LGPs with a bare minimum of data -- POTENTIAL ISSUE: IF AN LGP ISN'T USED, DOESN'T THAT MEAN THE MIXTURE COEFFICIENTS HAVE TO BE ADJUSTED ACCORDINGLY?                    
+                    weightedZ = weightedZ + self.LGPs{j}.getMC()*self.LGPs{j}.getF()*self.LGPs{j}.predict(x)/self.mcfSum;
+                end
+            end
+            self.updateMCs(); % revert back to the mixture coefficients of all LGPs, not just the started ones
+            self.updateMCFSum(); % revert back to the mcf sum with all LGPs, not just the started ones
         end
         
         function updateCenters(self,Datum,posteriors)
             for i = 1:self.nLGPs
                 self.LGPs{i}.updateCenter(Datum.getX(),posteriors(i));
+            end
+        end
+        
+        function updateStartedLGPMCs(self) % find mixture coefficients of just the started LGPs       
+            startedSPSum = 0;
+            for j = 1:self.nLGPs
+                if self.LGPs{j}.isStarted
+                    startedSPSum = startedSPSum + self.LGPs{j}.getSP();
+                end                
+            end
+            for j = 1:self.nLGPs
+                if self.LGPs{j}.isStarted
+                    self.LGPs{j}.setMC(self.LGPs{j}.getSP()/startedSPSum);
+                else
+                    self.LGPs{j}.setMC(0);
+                end
             end
         end
         
@@ -100,7 +144,7 @@ classdef ILGPR < handle
             for i = 1:self.nLGPs
                 self.mcfSum = self.mcfSum + self.LGPs{i}.getMC()*self.LGPs{i}.getF();
             end
-        end
+        end        
         
 
         

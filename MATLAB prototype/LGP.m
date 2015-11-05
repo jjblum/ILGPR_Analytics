@@ -12,7 +12,6 @@ classdef LGP < handle
         hyp      % vector of log(hyperparameters)
         u        % center location
         L        % lower triangular (Cholesky) decomp of K
-        LT       % transpose of lower triangular decomp of K (saved so you don't need to recompute)
         R        % permutation matrix
         K        % covariance matrix
         N        % number of training points
@@ -24,24 +23,22 @@ classdef LGP < handle
         data     % vector of Datum objects
         f        % most recent likelihood result
         ID       % the index of the LGP itself (order of creation)
+        alpha    % the prediction vector = inv(K + sigma_n^2*I)*Z
     end
     
     methods
-        function obj = LGP(ID,Datum)
-            
-%             keyboard
+        function obj = LGP(ID,Datum)            
             obj.ID = ID;
             obj.X = Datum.getX();
             obj.Z = Datum.getZ();
-            obj.hyp = [log(5) log(5) log(1)]; % log(length scale 1), log(length scale 2), log(process variability)
-            obj.W = diag((1./exp(obj.hyp(1:2))).^2);
+            obj.hyp.mean = 0;
+            obj.hyp.cov = [log(5) log(5) log(1)]'; % log(length scale 1), log(length scale 2), log(process variability)
+            obj.hyp.lik = 0.1; % sigma_n, noise in sensor
+            obj.W = diag((1./exp(obj.hyp.cov(1:2))).^2);
             obj.u = Datum.getX();
             obj.R = [];
-%             obj.K = covSEard(obj.hyp,obj.X'); % K = covSEard(hyp, x, z, i) - note that each datum x is a ROW, not a column
-%             obj.L = chol(obj.K,'lower');
-            %                 obj.K = [];
-            %                 obj.L = [];
-            obj.LT = [];
+            obj.K = [];
+            obj.L = [];
             obj.N = 1;
             obj.NMAX = 50;
             obj.NSTART = 5;
@@ -61,6 +58,23 @@ classdef LGP < handle
             choleskyUpdate(self);
         end
         
+        function zhat = predict(self,x)
+            Xx = horzcat(self.X,x);
+            a = bsxfun(@minus,Xx,mean(Xx,2));
+            oldX = a(:,1:end-1);
+            newX = a(:,end);
+            K_new = self.covarianceVector(oldX,newX);
+            zhat = K_new'*self.alpha;
+        end
+        
+        function optimizeHyperparameters(self)
+            covfunc = @covSEard;
+            meanfunc = @meanConst; 
+            likfunc = @likGauss;
+            self.hyp.mean = mean(self.Z); % guess that mean function is just the mean of the training data
+            [self.hyp, f_log, iterations] = minimize(self.hyp, @gp, -10, @infExact, meanfunc, covfunc, likfunc, self.X', self.Z);
+        end        
+        
         function updateX(self, x)
             self.X = horzcat(self.X,x);
             
@@ -75,40 +89,74 @@ classdef LGP < handle
         end
         
         function updateCenter(self, x, posterior)
-%             keyboard
+            %             keyboard
             self.u = self.u + posterior/self.sp*(x - self.u);
         end
         
         function choleskyUpdate(self)
             
-%             keyboard
-            
             if self.N < self.NSTART
                 return;
             elseif self.N == self.NSTART
-                firstCholesky(self);
+                firstCholesky(self);    
+                self.started = 1;
             elseif self.N > self.NMAX
-                % the incremental cholesky update with removal
+                % the incremental cholesky update with removal (Find R and include it)
             else
                 % the incremental cholesky update without removal
+                
+                % update L
+                self.incrementalCholeskyUpdate();                
+                
             end
+            self.optimizeHyperparameters();
+        end                
+        
+        function K_new = covarianceVector(self,oldX,newX)
+            oldX_minus_newX = bsxfun(@minus,oldX,newX);
+            K_new = exp(-1/2*sum(oldX_minus_newX'*self.W.*oldX_minus_newX',2));            
         end
         
         function incrementalCholeskyUpdate(self)
-            
+            a = bsxfun(@minus,self.X,mean(self.X,2));
+            oldX = a(:,1:end-1);
+            newX = a(:,end);
+            K_new = self.covarianceVector(oldX,newX);
+            k_new = 1;
+            l = self.forwardSubstitution(self.L,K_new);
+            lstar = sqrt(k_new - norm(l,2)^2);
+            self.L = vertcat(horzcat(self.L,zeros(self.N-1,1)),horzcat(l',lstar));
+            self.K = self.L*self.L';
+            self.alpha = self.backwardSubstitution(self.L',self.forwardSubstitution(self.L,self.Z));
         end
         
         function firstCholesky(self)
-%             keyboard
             firstK(self);
             self.L = chol(self.K,'lower');
-            self.LT = self.L';
+            self.alpha = self.K\self.Z;
         end
         
         function firstK(self)
-            keyboard
-            self.K = covSEard(self.hyp,self.X');
+            self.K = covSEard(self.hyp.cov,self.X');
         end
+        
+        function x = forwardSubstitution(self,L,b)
+            n = length(b);
+            x = zeros(n,1);
+            x(1) = b(1)/L(1,1);
+            for j = 2:n
+                x(j) = (b(j)-L(j,1:j-1)*x(1:j-1))/L(j,j);
+            end
+        end
+        
+        function x = backwardSubstitution(self,U,b)
+            n = length(b);
+            x = zeros(n,1);
+            x(n) = b(n)/U(n,n);
+            for j = n-1:-1:1
+                x(j) = (b(j)-U(j,j+1:n)*x(j+1:n))/U(j,j);
+            end
+        end        
         
         function updateSP(self, p)
             self.sp = self.sp + p;
@@ -131,12 +179,16 @@ classdef LGP < handle
         end
         
         function updateF(self,x)
-%             keyboard
+            %             keyboard
             % ratio = norm(x-self.u)*sqrt(self.W(1,1))
             % rough_f = exp(-1/2*ratio)
-            self.f = exp(-1/2*(x-self.u)'*self.W*(x-self.u)); 
+            self.f = exp(-1/2*(x-self.u)'*self.W*(x-self.u));
             % approximately exp(-1/2*[ratio of squared distance to squared length scale]). e.g. if ratio is 5, f ~ 0.1
             % So if we want a new LGP when more than 2*length scale away, need to set cutoff to about 0.4
+        end
+        
+        function started = isStarted(self)
+            started = self.started;
         end
     end
     

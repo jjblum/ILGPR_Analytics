@@ -16,14 +16,14 @@ classdef ILGPR < handle
     end
     
     methods
-        function obj = ILGPR(predictionX, predictionZ, predictionS)            
+        function obj = ILGPR(predictionX, predictionZ, predictionS)
             obj.nLGPs = 0;
             obj.LGPs = cell(1,1);
             obj.predictionX = predictionX;
             obj.predictionZ = predictionZ;
             obj.predictionS = predictionS;
             obj.spSum = 0;
-            obj.newLGPCutoff = 0.1;
+            obj.newLGPCutoff = 0.4; % if the best LGP has nothing better than a 50/50 shot, generate a new LGP
         end       
         
         function newDatum(self,Datum)
@@ -39,7 +39,7 @@ classdef ILGPR < handle
                 [maxLikelihood,bestLGPIdx] = max(likelihoods);
                                 
                 if maxLikelihood > self.newLGPCutoff
-                    updateMCFSum(); % update sum of mixture coefficient*likelihood, used to find the posterior
+                    updateMCFSum(self); % update sum of mixture coefficient*likelihood, used to find the posterior
                     
                     % calculate posterior for all LGPs
                     posteriors = zeros(self.nLGPs,1);
@@ -48,41 +48,80 @@ classdef ILGPR < handle
                         posteriors(i) = posterior;
                         self.LGPs{i}.updateSP(posterior);
                     end
-                    updateMCs();
-                    updateCenters(Datum,posteriors);
+                    updateMCs(self);                                        
+                    updateCenters(self,Datum,posteriors);
                     
                     % add Datum to LGP with maximum likelihood (not max posterior)                    
                     self.LGPs{bestLGPIdx}.newDatum(Datum);
                     
                 else % the max likelihood is too small, need new LGP 
-                    addLGP(Datum);
-                    updateMCs();
+                    addLGP(self,Datum);
+                    updateMCs(self);
                 end
                 
             else % the first LGP
-                addLGP(Datum);
-                updateMC
+                addLGP(self,Datum);
+                updateMCs(self);
             end            
         end
         
         function addLGP(self,Datum)
             self.nLGPs = self.nLGPs + 1;
-            newLGP = LGP(Datum);
+            newLGP = LGP(self.nLGPs,Datum);            
             self.LGPs{self.nLGPs} = newLGP;
         end        
         
-        function prediction(self)
+        function weightedZ = predict(self,x)    
             
+            keyboard
+            
+            for j=1:self.nLGPs
+                
+            end
+            
+            self.updateStartedLGPMCs();
+            self.mcfSum = 0;
+            for j=1:self.nLGPs
+                self.LGPs{j}.updateF(x);
+                if self.LGPs{j}.isStarted()
+                    self.mcfSum = self.mcfSum + self.LGPs{j}.getMC()*self.LGPs{j}.getF();
+                end
+            end
+            
+            weightedZ = 0;
+            for j=1:self.nLGPs
+                if self.LGPs{j}.isStarted() % only want to use LGPs with a bare minimum of data -- POTENTIAL ISSUE: IF AN LGP ISN'T USED, DOESN'T THAT MEAN THE MIXTURE COEFFICIENTS HAVE TO BE ADJUSTED ACCORDINGLY?                    
+                    weightedZ = weightedZ + self.LGPs{j}.getMC()*self.LGPs{j}.getF()*self.LGPs{j}.predict(x)/self.mcfSum;
+                end
+            end
+            self.updateMCs(); % revert back to the mixture coefficients of all LGPs, not just the started ones
+            self.updateMCFSum(); % revert back to the mcf sum with all LGPs, not just the started ones
         end
         
         function updateCenters(self,Datum,posteriors)
-            for i = 1:self.nLPGs
-                self.LPGs{i}.updateCenter(Datum.getX(),posteriors(i));
+            for i = 1:self.nLGPs
+                self.LGPs{i}.updateCenter(Datum.getX(),posteriors(i));
+            end
+        end
+        
+        function updateStartedLGPMCs(self) % find mixture coefficients of just the started LGPs       
+            startedSPSum = 0;
+            for j = 1:self.nLGPs
+                if self.LGPs{j}.isStarted
+                    startedSPSum = startedSPSum + self.LGPs{j}.getSP();
+                end                
+            end
+            for j = 1:self.nLGPs
+                if self.LGPs{j}.isStarted
+                    self.LGPs{j}.setMC(self.LGPs{j}.getSP()/startedSPSum);
+                else
+                    self.LGPs{j}.setMC(0);
+                end
             end
         end
         
         function updateMCs(self)
-            updateSPSum();
+            updateSPSum(self);
             for i = 1:self.nLGPs
                 self.LGPs{i}.setMC(self.LGPs{i}.getSP()/self.spSum);
             end               
@@ -90,17 +129,17 @@ classdef ILGPR < handle
         
         function updateSPSum(self)
             self.spSum = 0;
-            for i = 1:size(self.LGPs,1)
+            for i = 1:self.nLGPs
                 self.spSum = self.spSum + self.LGPs{i}.getSP();
             end            
         end
         
-        function updateMCFSum(self, x)
+        function updateMCFSum(self)
             self.mcfSum = 0;
-            for i = 1:size(self.LGPs,1)
-                self.mcfSum = self.LGPs{i}.getMC()*self.LGPs{i}.getF();
+            for i = 1:self.nLGPs
+                self.mcfSum = self.mcfSum + self.LGPs{i}.getMC()*self.LGPs{i}.getF();
             end
-        end
+        end        
         
 
         
