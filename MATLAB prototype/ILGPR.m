@@ -13,7 +13,7 @@ classdef ILGPR < handle
         spSum % sum of LGP's activations
         mcfSum % sum of mixture components
         newLGPCutoff % likelihood below which a new LGP will be added
-        M % M closest local models in prediction procedure, user-defined
+        M % the maximum number of LGP models used in the prediction
     end
     
     methods
@@ -25,7 +25,7 @@ classdef ILGPR < handle
             obj.predictionS = predictionS;
             obj.spSum = 0;
             obj.newLGPCutoff = 0.4; % if the best LGP has nothing better than a 50/50 shot, generate a new LGP
-            obj.M = 3;
+            obj.M = 10;
         end       
         
         function newDatum(self,Datum)
@@ -73,29 +73,91 @@ classdef ILGPR < handle
             self.LGPs{self.nLGPs} = newLGP;
         end        
         
-        function prediction(self,Datum)
-            % calculate likelihood for all LGPs
-            likelihoods = zeros(self.nLGPs,1);
-            for i = 1:self.nLGPs
-                self.LGPs{i}.updateF(Datum.getX());
-                likelihoods(i) = self.LGPs{i}.getF();
+        function weightedZ = predict(self,x)
+                
+            numStarted = 0;
+            validLGPIdx = [];
+            for j=1:self.nLGPs
+                if self.LGPs{j}.isStarted()
+                    numStarted = numStarted + 1;
+                    validLGPIdx = [validLGPIdx j];
+                end
+            end
+
+            if numStarted > self.M
+                numStarted = self.M;
+            end
+            if ~numStarted
+                disp('WARNING: No started LGPs available for prediction');
+                return;
             end
             
+%             self.updateStartedLGPMCs();
+%             self.mcfSum = 0;
+%             for j=1:self.nLGPs                
+%                 if self.LGPs{j}.isStarted()
+%                     self.LGPs{j}.updateF(x);
+%                     self.mcfSum = self.mcfSum + self.LGPs{j}.getMC()*self.LGPs{j}.getF();
+%                 end
+%             end
+%             
+%             weightedZ = 0;
+%             for j=1:self.nLGPs
+%                 if self.LGPs{j}.isStarted() % only want to use LGPs with a bare minimum of data -- POTENTIAL ISSUE: IF AN LGP ISN'T USED, DOESN'T THAT MEAN THE MIXTURE COEFFICIENTS HAVE TO BE ADJUSTED ACCORDINGLY?                    
+%                     weightedZ = weightedZ + self.LGPs{j}.getMC()*self.LGPs{j}.getF()*self.LGPs{j}.predict(x)/self.mcfSum;
+%                 end
+%             end
+%             self.updateMCs(); % revert back to the mixture coefficients of all LGPs, not just the started ones
+%             self.updateMCFSum(); % revert back to the mcf sum with all LGPs, not just the started ones
+
+            % calculate likelihood for all LGPs
+            likelihoods = zeros(numStarted,1);
+            likelihoodsIdx = zeros(numStarted,1);
+            for i = 1:numStarted
+                validIndex = validLGPIdx(i);
+                self.LGPs{validIndex}.updateF(x.getX());
+                likelihoods(i) = self.LGPs{validIndex}.getF();
+                likelihoodsIdx(i) = validIndex;
+            end
+
             % M closest local models, user-defined.
             [sortedValues, sortIndex] = sort(likelihoods,'descend');
-            
-            predictY = zeros(self.M,1);
-            for i = 1:self.M
-                predictY(i) = self.LGPs{sortIndex(i)}.predictY(Datum);
+
+            predictY = zeros(numStarted,1);
+            for i = 1:numStarted
+                predictY(i) = self.LGPs{likelihoodsIdx(sortIndex(i))}.predict(x.getX());         
             end
+            weightedZ = sortedValues(1:numStarted)'*predictY/sum(sortedValues(1:numStarted));
             
-            prediction = sortedValues(1:self.M)'*predictY/sum(sortedValues(1:self.M));
-            display(prediction);
+%             % for testing
+%             display(likelihoods);
+%             display(likelihoodsIdx);
+%             display(predictY);
+%             display(sortedValues);
+%             display(sortIndex);
+%             display(numStarted);
+%             display(x);
         end
         
         function updateCenters(self,Datum,posteriors)
             for i = 1:self.nLGPs
                 self.LGPs{i}.updateCenter(Datum.getX(),posteriors(i));
+            end
+        end
+        
+        function updateStartedLGPMCs(self) % find mixture coefficients of just the started LGPs       
+            startedSPSum = 0;
+            for j = 1:self.nLGPs
+                if self.LGPs{j}.isStarted
+                    startedSPSum = startedSPSum + self.LGPs{j}.getSP();
+                end                
+            end
+            for j = 1:self.nLGPs
+                if self.LGPs{j}.isStarted
+                    self.LGPs{j}.setMC(self.LGPs{j}.getSP()/startedSPSum);
+                else
+                    self.LGPs{j}.setMC(0);
+                end
             end
         end
         
@@ -118,10 +180,8 @@ classdef ILGPR < handle
             for i = 1:self.nLGPs
                 self.mcfSum = self.mcfSum + self.LGPs{i}.getMC()*self.LGPs{i}.getF();
             end
-        end
-        
-
-        
+        end        
+     
     end
     
 end
