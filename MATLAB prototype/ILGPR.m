@@ -13,6 +13,7 @@ classdef ILGPR < handle
         spSum % sum of LGP's activations
         mcfSum % sum of mixture components
         newLGPCutoff % likelihood below which a new LGP will be added
+        M % the maximum number of LGP models used in the prediction
     end
     
     methods
@@ -24,6 +25,7 @@ classdef ILGPR < handle
             obj.predictionS = predictionS;
             obj.spSum = 0;
             obj.newLGPCutoff = 0.4; % if the best LGP has nothing better than a 50/50 shot, generate a new LGP
+            obj.M = 5;
         end       
         
         function newDatum(self,Datum)
@@ -71,7 +73,11 @@ classdef ILGPR < handle
             self.LGPs{self.nLGPs} = newLGP;
         end        
         
-        function weightedZ = predict(self,x)       
+        function weightedZ = predict(self,x)
+            
+            % TODO: also needs to be limited to the closest M models - as written it uses all models
+            
+            
             atLeastOneStarted = 0;
             for j=1:self.nLGPs
                 if self.LGPs{j}.isStarted()
