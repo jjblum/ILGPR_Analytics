@@ -68,3 +68,16 @@ end
 for j = 1:N
     train_error(j) = datum{j}.getZ()-ilgpr.predict(datum{j});
 end
+
+% test prediction on testing date
+N_test = 100; % maximum number of sample locations
+Xz_test = 20+5*gpml_randn(rand(1), N_test, 2)'; % predetermined random set of sample locations, note that each X is a column vector
+Xz_test(Xz_test > 40) = 40;
+Xz_test(Xz_test < 1) = 1;
+test_error = zeros(N_test,1); % training error
+for j = 1:N_test
+    x = Xz_test(:,j);
+    z = myInterpolant(x(1),x(2));
+    datum = Datum(x,z,j);
+    test_error(j) = z-ilgpr.predict(datum);
+end
