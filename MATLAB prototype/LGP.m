@@ -100,7 +100,7 @@ classdef LGP < handle
             elseif self.N == self.NSTART
                 firstCholesky(self);    
                 self.started = 1;
-            elseif self.N > self.NMAX
+%             elseif self.N > self.NMAX
                 % the incremental cholesky update with removal (Find R and include it)
             else
                 % the incremental cholesky update without removal
