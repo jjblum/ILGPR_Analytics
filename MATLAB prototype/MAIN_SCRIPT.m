@@ -45,7 +45,7 @@ load('./map_0001')
 % set(gca, 'FontSize', 14)
 
 %% APPLY ILGPR TO APPROXIMATE THE A PRIORI FULL GP
-N = 100; % maximum number of sample locations
+N = 500; % maximum number of sample locations
 Xz = 20+5*gpml_randn(rand(1), N, 2)'; % predetermined random set of sample locations, note that each X is a column vector
 Xz(Xz > 40) = 40;
 Xz(Xz < 1) = 1;
