@@ -78,6 +78,6 @@ test_error = zeros(N_test,1); % training error
 for j = 1:N_test
     x = Xz_test(:,j);
     z = myInterpolant(x(1),x(2));
-    datum = Datum(x,z,j);
-    test_error(j) = z-ilgpr.predict(datum);
+    datum_test = Datum(x,z,j);
+    test_error(j) = z-ilgpr.predict(datum_test);
 end
