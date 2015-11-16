@@ -24,8 +24,8 @@ classdef ILGPR < handle
             obj.predictionZ = predictionZ;
             obj.predictionS = predictionS;
             obj.spSum = 0;
-            obj.newLGPCutoff = 0.4; % if the best LGP has nothing better than a 50/50 shot, generate a new LGP
-            obj.M = 10;
+            obj.newLGPCutoff = 0.9; % if the best LGP has nothing better than a 50/50 shot, generate a new LGP
+            obj.M = 5;
         end       
         
         function newDatum(self,Datum)
@@ -73,10 +73,10 @@ classdef ILGPR < handle
             self.LGPs{self.nLGPs} = newLGP;
         end        
         
-        function weightedZ = predict(self,x)
-                
+        function weightedZ = predict(self,x)             
             numStarted = 0;
             validLGPIdx = [];
+            
             for j=1:self.nLGPs
                 if self.LGPs{j}.isStarted()
                     numStarted = numStarted + 1;
@@ -85,58 +85,46 @@ classdef ILGPR < handle
             end
 
             if numStarted > self.M
-                numStarted = self.M;
+                numPredictLGP = self.M;
+            else
+                numPredictLGP = numStarted;
             end
             if ~numStarted
                 disp('WARNING: No started LGPs available for prediction');
                 return;
             end
-            
-%             self.updateStartedLGPMCs();
-%             self.mcfSum = 0;
-%             for j=1:self.nLGPs                
-%                 if self.LGPs{j}.isStarted()
-%                     self.LGPs{j}.updateF(x);
-%                     self.mcfSum = self.mcfSum + self.LGPs{j}.getMC()*self.LGPs{j}.getF();
-%                 end
-%             end
-%             
-%             weightedZ = 0;
-%             for j=1:self.nLGPs
-%                 if self.LGPs{j}.isStarted() % only want to use LGPs with a bare minimum of data -- POTENTIAL ISSUE: IF AN LGP ISN'T USED, DOESN'T THAT MEAN THE MIXTURE COEFFICIENTS HAVE TO BE ADJUSTED ACCORDINGLY?                    
-%                     weightedZ = weightedZ + self.LGPs{j}.getMC()*self.LGPs{j}.getF()*self.LGPs{j}.predict(x)/self.mcfSum;
-%                 end
-%             end
-%             self.updateMCs(); % revert back to the mixture coefficients of all LGPs, not just the started ones
-%             self.updateMCFSum(); % revert back to the mcf sum with all LGPs, not just the started ones
 
             % calculate likelihood for all LGPs
             likelihoods = zeros(numStarted,1);
-            likelihoodsIdx = zeros(numStarted,1);
+            likelihoodsIdx = validLGPIdx;
             for i = 1:numStarted
-                validIndex = validLGPIdx(i);
+                validIndex = likelihoodsIdx(i);
                 self.LGPs{validIndex}.updateF(x.getX());
                 likelihoods(i) = self.LGPs{validIndex}.getF();
-                likelihoodsIdx(i) = validIndex;
             end
 
             % M closest local models, user-defined.
-            [sortedValues, sortIndex] = sort(likelihoods,'descend');
+            [sortedlikelihoods, sortlikelihoodsIdx] = sort(likelihoods,'descend');
 
-            predictY = zeros(numStarted,1);
-            for i = 1:numStarted
-                predictY(i) = self.LGPs{likelihoodsIdx(sortIndex(i))}.predict(x.getX());         
+            predictY = zeros(numPredictLGP,1);
+            sortedMC = zeros(numPredictLGP,1); % pi_k in paper
+            sortedF = sortedlikelihoods(1:numPredictLGP); % w_k in paper
+            for i = 1:numPredictLGP
+                predictY(i) = self.LGPs{likelihoodsIdx(sortlikelihoodsIdx(i))}.predict(x.getX());   
+                sortedMC(i) = self.LGPs{likelihoodsIdx(sortlikelihoodsIdx(i))}.getMC();
             end
-            weightedZ = sortedValues(1:numStarted)'*predictY/sum(sortedValues(1:numStarted));
             
-%             % for testing
-%             display(likelihoods);
-%             display(likelihoodsIdx);
-%             display(predictY);
-%             display(sortedValues);
-%             display(sortIndex);
-%             display(numStarted);
-%             display(x);
+            % Clustering to filter the outlier prediction data
+            % Assuming only few outliers, so choose k=2
+            clusteringIdx = kmeans(predictY,2);
+            if sum(clusteringIdx==1) > sum(clusteringIdx==2)
+                ultimateIdx = (clusteringIdx==1);
+            else
+                ultimateIdx = (clusteringIdx==2);
+            end
+            
+            sortedMCF = sortedMC(ultimateIdx).*sortedF(ultimateIdx); % pi_k*w_k, coefficient before \hat{y_k}
+            weightedZ = sortedMCF'*predictY(ultimateIdx)/sum(sortedMCF);
         end
         
         function updateCenters(self,Datum,posteriors)

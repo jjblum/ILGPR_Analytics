@@ -6,7 +6,7 @@ addpath(genpath('./gpml-v3.5')); startup;
 
 load('./map_0001')
 
-% %% use GPML on a 2-D example, generated using GPML sampling
+%% use GPML on a 2-D example, generated using GPML sampling
 % ell = 10; sf = 15; sn = 0.1; % sn must be nonzero to avoid not-positive-definite errors in GPML code
 % meanfunc = @meanConst; hyp.mean = 50;
 % covfunc = @covSEiso; hyp.cov = log([ell; sf]);
@@ -45,7 +45,7 @@ load('./map_0001')
 % set(gca, 'FontSize', 14)
 
 %% APPLY ILGPR TO APPROXIMATE THE A PRIORI FULL GP
-N = 100; % maximum number of sample locations
+N = 400; % maximum number of sample locations
 Xz = 20+5*gpml_randn(rand(1), N, 2)'; % predetermined random set of sample locations, note that each X is a column vector
 Xz(Xz > 40) = 40;
 Xz(Xz < 1) = 1;
@@ -56,7 +56,6 @@ ilgpr = ILGPR(predictionX,predictionZ,predictionS); % the ILGPR object
 myInterpolant = griddedInterpolant(X,Y,heatmap_grid,'cubic');
 
 datum = cell(size(predictionX,1),1); % training data
-train_error = zeros(size(predictionX,1),1); % training error
 for j = 1:N
     x = Xz(:,j);
     z = myInterpolant(x(1),x(2));
@@ -64,20 +63,42 @@ for j = 1:N
     ilgpr.newDatum(datum{j});
 end
 
-% test prediction
+%% Test prediction on training set
+train_label = zeros(N,1); % trainting label
+train_pred = zeros(N,1); % trainting prediction
 for j = 1:N
-    train_error(j) = datum{j}.getZ()-ilgpr.predict(datum{j});
+    train_label(j) = datum{j}.getZ();
+    train_pred(j) = ilgpr.predict(datum{j});
 end
+train_error = train_label-train_pred; % training error
+train_mse = mean((train_label-train_pred).^2); % MSE of training data
+display(train_mse);
 
-% test prediction on testing date
-N_test = 100; % maximum number of sample locations
-Xz_test = 20+5*gpml_randn(rand(1), N_test, 2)'; % predetermined random set of sample locations, note that each X is a column vector
+%% Test prediction on testing set
+N_test = 200; % Number of testing data
+Xz_test = 20+5*gpml_randn(rand(1), N_test, 2)';
 Xz_test(Xz_test > 40) = 40;
 Xz_test(Xz_test < 1) = 1;
-test_error = zeros(N_test,1); % training error
+
+test_label = zeros(N_test,1); % testing label
+test_pred = zeros(N_test,1); %testing prediction
 for j = 1:N_test
     x = Xz_test(:,j);
-    z = myInterpolant(x(1),x(2));
-    datum_test = Datum(x,z,j);
-    test_error(j) = z-ilgpr.predict(datum_test);
+    test_label(j) = myInterpolant(x(1),x(2));
+    datum = Datum(x,z,j);
+    test_pred(j) = ilgpr.predict(datum);
 end
+test_error = test_label-test_pred; % testing error
+test_mse = mean((test_label-test_pred).^2); % MSE of testing data
+display(test_mse);
+
+%% visualization
+% temp = [ilgpr.LGPs{:}];
+% loc_lgps = [temp.u]; clear temp;
+% 
+% res = 100;
+% x_1 = linspace(min([Xz_test(1,:),loc_lgps(1,:)]), ...
+%                max([Xz_test(1,:),loc_lgps(1,:)]), res+1);
+% x_2 = linspace(min([Xz_test(2,:),loc_lgps(2,:)]), ...
+%                max([Xz_test(2,:),loc_lgps(2,:)]), res+1);
+% predictions = visualize_ilgpr(ilgpr, x_1, x_2);
