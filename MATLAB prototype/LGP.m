@@ -14,6 +14,7 @@ classdef LGP < handle
         L        % lower triangular (Cholesky) decomp of K
         R        % permutation matrix
         K        % covariance matrix
+        invK     % inverse of covariance matrix + sensor noise on diagonal
         N        % number of training points
         NMAX     % maximum number of training points
         NSTART   % number of points needed before computation actually begins
@@ -33,15 +34,15 @@ classdef LGP < handle
             obj.Z = Datum.getZ();
             obj.hyp.mean = 0;
             obj.hyp.cov = [log(5) log(5) log(1)]'; % log(length scale 1), log(length scale 2), log(process variability)
-            obj.hyp.lik = 0.1; % sigma_n, noise in sensor
+            obj.hyp.lik = log(exp(1)); % sigma_n, noise in sensor
             obj.W = diag((1./exp(obj.hyp.cov(1:2))).^2);
             obj.u = Datum.getX();
             obj.R = [];
             obj.K = [];
             obj.L = [];
             obj.N = 1;
-            obj.NMAX = 50;
-            obj.NSTART = 5;
+            obj.NMAX = 100;
+            obj.NSTART = 10;
             obj.started = 0;
             obj.sp = 1;
             obj.data = cell(1,1);
@@ -58,14 +59,21 @@ classdef LGP < handle
             choleskyUpdate(self);
         end
         
-        function zhat = predict(self,x)
+        function [zHat, sHat] = predict(self,x)
             Xx = horzcat(self.X,x);
             a = bsxfun(@minus,Xx,mean(Xx,2));
             oldX = a(:,1:end-1);
             newX = a(:,end);
             K_new = self.covarianceVector(oldX,newX);
-            zhat = K_new'*self.alpha;
-        end
+            zHat = K_new'*self.alpha;
+            
+            k_new = 1 + exp(self.hyp.lik) + 1e-5;
+%             KinvRowsVector = kron(eye(length(self.alpha)),self.Z')\self.alpha;
+%             KinvMatrix = reshape(KinvRowsVector,length(self.alpha),length(self.alpha))'; % note the last transpose
+            % this KinvMatrix is NOT unique. So I don't know if we can actually use it. Probably not.
+            KinvMatrixByChol = self.L'\inv(self.L);           
+            sHat = k_new - K_new'*KinvMatrixByChol*K_new;        
+        end        
         
         function optimizeHyperparameters(self)
             covfunc = @covSEard;
@@ -73,6 +81,7 @@ classdef LGP < handle
             likfunc = @likGauss;
             self.hyp.mean = mean(self.Z); % guess that mean function is just the mean of the training data
             [self.hyp, f_log, iterations] = minimize(self.hyp, @gp, -10, @infExact, meanfunc, covfunc, likfunc, self.X', self.Z);
+%             self.W = diag((1./exp(self.hyp.cov(1:2))).^2);
         end        
         
         function updateX(self, x)
@@ -100,7 +109,7 @@ classdef LGP < handle
             elseif self.N == self.NSTART
                 firstCholesky(self);    
                 self.started = 1;
-            elseif self.N > self.NMAX
+%             elseif self.N > self.NMAX
                 % the incremental cholesky update with removal (Find R and include it)
             else
                 % the incremental cholesky update without removal
@@ -122,11 +131,33 @@ classdef LGP < handle
             oldX = a(:,1:end-1);
             newX = a(:,end);
             K_new = self.covarianceVector(oldX,newX);
-            k_new = 1;
+            k_new = 1 + exp(self.hyp.lik) + 1e-5;
             l = self.forwardSubstitution(self.L,K_new);
             lstar = sqrt(k_new - norm(l,2)^2);
-            self.L = vertcat(horzcat(self.L,zeros(self.N-1,1)),horzcat(l',lstar));
+            
+            if ~isreal(lstar)
+                disp(sprintf('WARNING: LGP %d l* element is imaginary\n',self.ID));
+                keyboard                
+            end
+            
+            self.L = vertcat(horzcat(self.L,zeros(self.N-1,1)),horzcat(l',lstar));            
+            
             self.K = self.L*self.L';
+            
+            if ~isreal(self.L)
+                disp(sprintf('WARNING: LGP %d L matrix has imaginary elements\n',self.ID));
+                keyboard
+            end
+                
+            if (rcond(self.L) < 1e-12 )
+                disp(sprintf('WARNING: LGP %d L matrix is singular\n',self.ID));
+                keyboard
+            end
+            if (rcond(self.K) < 1e-12 )
+                disp(sprintf('WARNING: LGP %d K matrix is singular\n',self.ID));
+                keyboard
+            end            
+            
             self.alpha = self.backwardSubstitution(self.L',self.forwardSubstitution(self.L,self.Z));
         end
         
@@ -138,6 +169,7 @@ classdef LGP < handle
         
         function firstK(self)
             self.K = covSEard(self.hyp.cov,self.X');
+            self.K = self.K + (exp(self.hyp.lik) + 1e-5)*eye(size(self.K));
         end
         
         function x = forwardSubstitution(self,L,b)
