@@ -5,7 +5,7 @@ clc
 addpath(genpath('./gpml-v3.5')); startup;
 addpath(genpath('./freezeColors'));
 
-load('./map_0002')
+load('./map_0001')
 
 % %% use GPML on a 2-D example, generated using GPML sampling
 % ell = 10; sf = 15; sn = 0.1; % sn must be nonzero to avoid not-positive-definite errors in GPML code
@@ -65,21 +65,21 @@ for j = 1:N
     ilgpr.newDatum(datum{j});
 end
 
-% training set prediction
-predictionZ = zeros(N,1);
-predictionS = zeros(N,1);
-for j = 1:N    
-    x = datum{j}.getX();
-    [predictionZ(j),predictionS(j)] = ilgpr.predict(x);
-    train_error(j) = datum{j}.getZ() - predictionZ(j);
-%     disp(sprintf('Training Evaluation, Data at [%f,%f] = %f, Prediction = %f, Error = %f\n',x(1),x(2),datum{j}.getZ(),predictionZ(j),train_error(j)));
-end
-surf(X,Y,heatmap_grid); hold on;
-plot3(Xz(1,:),Xz(2,:),predictionZ,'k+','MarkerSize',5,'LineWidth',3);
-% plot3(Xz(1,:),Xz(2,:),predictionS,'+','Color',[0.7 0.7 0.7],'MarkerSize',5,'LineWidth',3);
-for j = 1:ilgpr.nLGPs
-    plot3(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2),myInterpolant(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2)),'ms','MarkerSize',10,'LineWidth',5);
-end
+% % training set prediction
+% predictionZ = zeros(N,1);
+% predictionS = zeros(N,1);
+% for j = 1:N    
+%     x = datum{j}.getX();
+%     [predictionZ(j),predictionS(j)] = ilgpr.predict(x);
+%     train_error(j) = datum{j}.getZ() - predictionZ(j);
+% %     disp(sprintf('Training Evaluation, Data at [%f,%f] = %f, Prediction = %f, Error = %f\n',x(1),x(2),datum{j}.getZ(),predictionZ(j),train_error(j)));
+% end
+% surf(X,Y,heatmap_grid); hold on;
+% plot3(Xz(1,:),Xz(2,:),predictionZ,'k+','MarkerSize',5,'LineWidth',3);
+% % plot3(Xz(1,:),Xz(2,:),predictionS,'+','Color',[0.7 0.7 0.7],'MarkerSize',5,'LineWidth',3);
+% for j = 1:ilgpr.nLGPs
+%     plot3(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2),myInterpolant(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2)),'ms','MarkerSize',10,'LineWidth',5);
+% end
 
 % test prediction on entire grid
 Xz_test = predictionX;
@@ -101,11 +101,11 @@ hold on
 freezeColors
 colormap('winter');
 surf(X,Y,reshape(test_Z,size(X)),'EdgeColor',[0.7 0.7 0.7]) % the prediction surface
-freezeColors
-colormap([0.8 0.8 0.8]);
-surf(X,Y,reshape(test_Z + 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
-surf(X,Y,reshape(test_Z - 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
-freezeColors
+% freezeColors
+% colormap([0.8 0.8 0.8]);
+% surf(X,Y,reshape(test_Z + 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
+% surf(X,Y,reshape(test_Z - 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
+% freezeColors
 hold off
 
 

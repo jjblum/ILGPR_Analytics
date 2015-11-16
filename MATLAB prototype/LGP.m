@@ -19,8 +19,6 @@ classdef LGP < handle
         NMAX     % maximum number of training points
         NSTART   % number of points needed before computation actually begins
         started  % boolean, false while N < NSTART
-        sp       % activation
-        mc       % mixture coefficient (pi in the paper)
         data     % vector of Datum objects
         f        % most recent likelihood result
         ID       % the index of the LGP itself (order of creation)
@@ -44,10 +42,8 @@ classdef LGP < handle
             obj.NMAX = 100;
             obj.NSTART = 10;
             obj.started = 0;
-            obj.sp = 1;
             obj.data = cell(1,1);
             obj.data{1} = Datum;
-            obj.mc = 0;
             obj.f = 0;
         end
         
@@ -56,6 +52,7 @@ classdef LGP < handle
             self.data{self.N} = Datum;
             updateX(self,Datum.getX());
             updateZ(self,Datum.getZ());
+            updateCenter(self);
             choleskyUpdate(self);
         end
         
@@ -65,9 +62,9 @@ classdef LGP < handle
             oldX = a(:,1:end-1);
             newX = a(:,end);
             K_new = self.covarianceVector(oldX,newX);
-            zHat = K_new'*self.alpha;
+            zHat = K_new'*self.alpha;                
             
-            k_new = 1 + exp(self.hyp.lik) + 1e-5;
+            k_new = exp(self.hyp.cov(3))^2 + exp(self.hyp.lik) + 1e-5;
 %             KinvRowsVector = kron(eye(length(self.alpha)),self.Z')\self.alpha;
 %             KinvMatrix = reshape(KinvRowsVector,length(self.alpha),length(self.alpha))'; % note the last transpose
             % this KinvMatrix is NOT unique. So I don't know if we can actually use it. Probably not.
@@ -75,18 +72,18 @@ classdef LGP < handle
             sHat = k_new - K_new'*KinvMatrixByChol*K_new;        
         end        
         
-        function optimizeHyperparameters(self)
+        function optimizeHyperparameters(self)  
             covfunc = @covSEard;
             meanfunc = @meanConst; 
             likfunc = @likGauss;
             self.hyp.mean = mean(self.Z); % guess that mean function is just the mean of the training data
             [self.hyp, f_log, iterations] = minimize(self.hyp, @gp, -10, @infExact, meanfunc, covfunc, likfunc, self.X', self.Z);
-%             self.W = diag((1./exp(self.hyp.cov(1:2))).^2);
+            self.W = diag((1./exp(self.hyp.cov(1:2))).^2);
+            firstCholesky(self);
         end        
         
         function updateX(self, x)
-            self.X = horzcat(self.X,x);
-            
+            self.X = horzcat(self.X,x);            
         end
         
         function updateZ(self, z)
@@ -97,9 +94,8 @@ classdef LGP < handle
             % m = index of value being replaced in covariance matrix
         end
         
-        function updateCenter(self, x, posterior)
-            %             keyboard
-            self.u = self.u + posterior/self.sp*(x - self.u);
+        function updateCenter(self)
+            self.u = mean(self.X,2);
         end
         
         function choleskyUpdate(self)
@@ -123,15 +119,16 @@ classdef LGP < handle
         
         function K_new = covarianceVector(self,oldX,newX)
             oldX_minus_newX = bsxfun(@minus,oldX,newX);
-            K_new = exp(-1/2*sum(oldX_minus_newX'*self.W.*oldX_minus_newX',2));            
+            K_new = exp(self.hyp.cov(3))^2*exp(-1/2*sum(oldX_minus_newX'*self.W.*oldX_minus_newX',2));            
         end
         
         function incrementalCholeskyUpdate(self)
+
             a = bsxfun(@minus,self.X,mean(self.X,2));
             oldX = a(:,1:end-1);
             newX = a(:,end);
             K_new = self.covarianceVector(oldX,newX);
-            k_new = 1 + exp(self.hyp.lik) + 1e-5;
+            k_new = exp(self.hyp.cov(3))^2 + exp(self.hyp.lik) + 1e-5;
             l = self.forwardSubstitution(self.L,K_new);
             lstar = sqrt(k_new - norm(l,2)^2);
             
@@ -189,22 +186,6 @@ classdef LGP < handle
                 x(j) = (b(j)-U(j,j+1:n)*x(j+1:n))/U(j,j);
             end
         end        
-        
-        function updateSP(self, p)
-            self.sp = self.sp + p;
-        end
-        
-        function sp = getSP(self)
-            sp = self.sp;
-        end
-        
-        function setMC(self,mc)
-            self.mc = mc;
-        end
-        
-        function mc = getMC(self)
-            mc = self.mc;
-        end
         
         function f = getF(self)
             f = self.f;
