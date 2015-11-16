@@ -94,6 +94,22 @@ test_mse = mean((test_label-test_pred).^2); % MSE of testing data
 test_nmse = test_mse/mean(test_label)/mean(test_pred); % nMSE of testing data
 display(test_nmse);
 
+%% Signed error plot
+% figure
+% hold on
+% for j = 1:N_test
+%     error_ratio = abs(test_error(j))/max(abs(test_error(:)));
+%     if sign(test_error(j)) < 0
+%         color = [1-error_ratio 1-error_ratio 1];
+%     else
+%         color = [1 1-error_ratio 1-error_ratio];
+%     end
+%     plot3(Xz_test(1,j),Xz_test(2,j),test_error(j),'.','MarkerSize',20,'Color',color);
+% end
+% hold off
+% axis equal
+% axis([0 40 0 40])
+
 %% visualization
 % temp = [ilgpr.LGPs{:}];
 % loc_lgps = [temp.u]; clear temp;
