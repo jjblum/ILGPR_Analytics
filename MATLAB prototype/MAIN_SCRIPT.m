@@ -72,7 +72,8 @@ for j = 1:N
 end
 train_error = train_label-train_pred; % training error
 train_mse = mean((train_label-train_pred).^2); % MSE of training data
-display(train_mse);
+train_nmse = train_mse/mean(train_label)/mean(train_pred); % nMSE of trainting data
+display(train_nmse);
 
 %% Test prediction on testing set
 N_test = 200; % Number of testing data
@@ -90,7 +91,8 @@ for j = 1:N_test
 end
 test_error = test_label-test_pred; % testing error
 test_mse = mean((test_label-test_pred).^2); % MSE of testing data
-display(test_mse);
+test_nmse = test_mse/mean(test_label)/mean(test_pred); % nMSE of testing data
+display(test_nmse);
 
 %% visualization
 % temp = [ilgpr.LGPs{:}];
