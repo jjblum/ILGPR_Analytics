@@ -90,7 +90,7 @@ classdef ILGPR < handle
             [sortedWeights, sorted_idx] = sort(weights,'descend');
 %             sorted_idx = sorted_idx(1:numStarted);            
             
-
+% keyboard
 
             weightedZ = 0;
             weightedS = 0;

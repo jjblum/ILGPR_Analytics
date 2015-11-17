@@ -8,6 +8,7 @@ classdef LGP < handle
     properties
         X        % data locations matrix
         Z        % data value vector
+        Zmean    % mean of input data
         W        % length scale matrix
         hyp      % vector of log(hyperparameters)
         u        % center location
@@ -30,10 +31,12 @@ classdef LGP < handle
             obj.ID = ID;
             obj.X = Datum.getX();
             obj.Z = Datum.getZ();
+            obj.Zmean = mean(obj.Z);
+            obj.Z = obj.Z - obj.Zmean;
             obj.hyp.mean = 0;
-            obj.hyp.cov = [log(5) log(5) log(1)]'; % log(length scale 1), log(length scale 2), log(process variability)
-            obj.hyp.lik = log(exp(1)); % sigma_n, noise in sensor
-            obj.W = diag((1./exp(obj.hyp.cov(1:2))).^2);
+            obj.hyp.cov = [log(1) log(1)]'; % log(length scale 1), log(length scale 2), log(process variability)
+            obj.hyp.lik = log(1); % sigma_n, noise in sensor
+            obj.W = diag((1./exp(obj.hyp.cov(1:end-1))).^2);
             obj.u = Datum.getX();
             obj.R = [];
             obj.K = [];
@@ -62,9 +65,10 @@ classdef LGP < handle
             oldX = a(:,1:end-1);
             newX = a(:,end);
             K_new = self.covarianceVector(oldX,newX);
-            zHat = K_new'*self.alpha;                
+%             zHat = K_new'*self.alpha;
+            zHat = K_new'*self.alpha + self.Zmean;
             
-            k_new = exp(self.hyp.cov(3))^2 + exp(self.hyp.lik) + 1e-5;
+            k_new = exp(self.hyp.cov(end))^2 + exp(self.hyp.lik) + 1e-5;
 %             KinvRowsVector = kron(eye(length(self.alpha)),self.Z')\self.alpha;
 %             KinvMatrix = reshape(KinvRowsVector,length(self.alpha),length(self.alpha))'; % note the last transpose
             % this KinvMatrix is NOT unique. So I don't know if we can actually use it. Probably not.
@@ -77,8 +81,8 @@ classdef LGP < handle
             meanfunc = @meanConst; 
             likfunc = @likGauss;
             self.hyp.mean = mean(self.Z); % guess that mean function is just the mean of the training data
-            [self.hyp, f_log, iterations] = minimize(self.hyp, @gp, -10, @infExact, meanfunc, covfunc, likfunc, self.X', self.Z);
-            self.W = diag((1./exp(self.hyp.cov(1:2))).^2);
+            [self.hyp, f_log, iterations] = minimize(self.hyp, @gp, -50, @infExact, meanfunc, covfunc, likfunc, self.X', self.Z);
+            self.W = diag((1./exp(self.hyp.cov(1:end-1))).^2);
             firstCholesky(self);
         end        
         
@@ -87,7 +91,10 @@ classdef LGP < handle
         end
         
         function updateZ(self, z)
-            self.Z = vertcat(self.Z,z);
+            self.Z = self.Z + self.Zmean; %%%%%%%%%%%%%%
+            self.Z = vertcat(self.Z,z); %%%%%%%%%%%%%%
+            self.Zmean = mean(self.Z); %%%%%%%%%%%%%%
+            self.Z = self.Z - self.Zmean; %%%%%%%%%%%%%%
         end
         
         function getR(self, m)
@@ -119,7 +126,7 @@ classdef LGP < handle
         
         function K_new = covarianceVector(self,oldX,newX)
             oldX_minus_newX = bsxfun(@minus,oldX,newX);
-            K_new = exp(self.hyp.cov(3))^2*exp(-1/2*sum(oldX_minus_newX'*self.W.*oldX_minus_newX',2));            
+            K_new = exp(self.hyp.cov(end))^2*exp(-1/2*sum(oldX_minus_newX'*self.W.*oldX_minus_newX',2));            
         end
         
         function incrementalCholeskyUpdate(self)
@@ -128,7 +135,7 @@ classdef LGP < handle
             oldX = a(:,1:end-1);
             newX = a(:,end);
             K_new = self.covarianceVector(oldX,newX);
-            k_new = exp(self.hyp.cov(3))^2 + exp(self.hyp.lik) + 1e-5;
+            k_new = exp(self.hyp.cov(end))^2 + exp(self.hyp.lik) + 1e-5;
             l = self.forwardSubstitution(self.L,K_new);
             lstar = sqrt(k_new - norm(l,2)^2);
             
@@ -161,7 +168,7 @@ classdef LGP < handle
         function firstCholesky(self)
             firstK(self);
             self.L = chol(self.K,'lower');
-            self.alpha = self.K\self.Z;
+            self.alpha = self.K\(self.Z - mean(self.Z)); %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         
         function firstK(self)
