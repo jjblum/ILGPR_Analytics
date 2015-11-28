@@ -99,15 +99,15 @@ classdef LGP < handle
             sHat = k_new - K_new'*self.invK*K_new;        
         end
         
-        function optimizeHyperparameters(self,iter)   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NOW ALLOWS FOR ITERATION SPECIFICATION, RECREATES L EACH TIME!!!
+        function optimizeHyperparameters(self)
             covfunc = @covSEard;
             meanfunc = @meanConst; 
             likfunc = @likGauss;
             self.hyp.mean = mean(self.Z); % guess that mean function is just the mean of the training data
-            [self.hyp, f_log, iterations] = minimize(self.hyp, @gp, -iter, @infExact, meanfunc, covfunc, likfunc, self.X', self.Z);
+            [self.hyp, f_log, iterations] = minimize(self.hyp, @gp, -10, @infExact, meanfunc, covfunc, likfunc, self.X', self.Z);
             self.W = diag((1./exp(self.hyp.cov(1:end-1))).^2);
-            firstCholesky(self);
-        end       
+            firstCholesky(self);            
+        end        
         
         function updateX(self, x)
             self.X = horzcat(self.X,x);
@@ -143,10 +143,10 @@ classdef LGP < handle
                 % the incremental cholesky update without removal
                 
                 % update L
-                incrementalCholeskyUpdate(self);                
+                self.incrementalCholeskyUpdate();                
                 
             end
-            optimizeHyperparameters(self,1);
+            self.optimizeHyperparameters();
         end                
         
         function K_new = covarianceVector(self,oldX,newX)
@@ -189,7 +189,7 @@ classdef LGP < handle
             self.L = chol(self.K,'lower');
             
             if abs(mean(self.Z)) > 1e-9
-                error('ERROR: forgot to remove mean from the training data');
+                error('
             end
             
             self.alpha = self.K\self.Z; 

@@ -6,6 +6,95 @@ addpath(genpath('./gpml-v3.5')); startup;
 
 load('./map_0001')
 
+%% 1D sine wave example
+ground_truth_mean = 15;
+ground_truth = @(x) sin(x) + ground_truth_mean;
+noisy_func = @(x) ground_truth(x) + 0.5*randn(size(x));
+
+x_all = (0:0.01:40)';
+x_fraction = 10;
+sparse_x = x_all(sort(randperm(length(x_all),round(length(x_all)/x_fraction)),'ascend'));
+y = noisy_func(sparse_x);
+
+predictionX = x_all'; % note that each X is a column vector
+predictionZ = zeros(size(predictionX,1),1); % assume value is 0
+predictionS = 10*ones(size(predictionX,1),1); % assume +/- 10
+ilgpr = ILGPR(predictionX,predictionZ,predictionS); % the ILGPR object
+
+N = length(sparse_x);
+datum = cell(size(predictionX,1),1); % training data
+for j = 1:N
+    x = sparse_x(j);
+    z = y(j);
+    datum{j} = Datum(x,z,j);
+    ilgpr.newDatum(datum{j});
+end
+
+predictionZ = zeros(size(x_all));
+predictionS = zeros(size(x_all));
+for j = 1:length(x_all)
+    x = predictionX(j);
+    [predictionZ(j),predictionS(j)] = ilgpr.predict(x);
+end
+
+temp = [ilgpr.LGPs{:}];
+temp = temp(vertcat(temp.started)==1);
+temp2 = [temp.hyp];
+hyp_cov = exp(horzcat(temp2.cov))
+PLOT_COUNT = 1 + length(temp);
+PLOT_COLS = 3;
+PLOT_ROWS = ceil(PLOT_COUNT/PLOT_COLS);
+
+figure;
+subplot(PLOT_ROWS,PLOT_COLS,1)
+hold on
+% fill([predictionX fliplr(predictionX)],[predictionZ'+2*predictionS' fliplr(predictionZ'-2*predictionS')],'c')
+plot(sparse_x,y,'k+');
+plot(x_all,ground_truth(x_all),'b--');
+plot(predictionX,predictionZ,'r-','LineWidth',2);
+plot(predictionX,predictionZ + 2*predictionS,'c-','LineWidth',2)
+plot(predictionX,predictionZ - 2*predictionS,'c-','LineWidth',2)
+for j = 1:ilgpr.nLGPs
+    if ilgpr.LGPs{j}.started == 1
+        plot(ilgpr.LGPs{j}.u,ilgpr.LGPs{j}.predict(ilgpr.LGPs{j}.u),'ms','MarkerSize',20,'LineWidth',4);
+    end
+end
+hold off
+
+n = 0;
+for j = 1:ilgpr.nLGPs
+    if ilgpr.LGPs{j}.started == 1
+        n = n+1;
+        subplot(PLOT_ROWS,PLOT_COLS,1+n)
+        LGP = ilgpr.LGPs{j};
+        
+%         if exp(LGP.hyp.cov(2)) < 0.1
+%             keyboard
+%         end
+        
+        
+%         figure
+        hold on
+        plot(x_all,ground_truth(x_all),'b--');
+        plot(LGP.X,LGP.Z+LGP.Zmean,'k+')
+        plot(LGP.u,LGP.predict(LGP.u),'ms','MarkerSize',20,'LineWidth',4);
+        local_x_all = linspace(min(LGP.X)-5,max(LGP.X)+5,100);
+        local_predictionZ = zeros(length(local_x_all),1);
+        local_predictionS = zeros(length(local_x_all),1);
+        for jj = 1:length(local_x_all)
+            [local_predictionZ(jj),local_predictionS(jj)] = LGP.predict(local_x_all(jj));
+        end
+        plot(local_x_all,local_predictionZ,'r-','LineWidth',2)
+        plot(local_x_all,local_predictionZ + 2*local_predictionS,'c-','LineWidth',2)
+        plot(local_x_all,local_predictionZ - 2*local_predictionS,'c-','LineWidth',2)
+        axis([min(x_all), max(x_all) -2+ground_truth_mean 2+ground_truth_mean])
+        title_string = sprintf('LGP # %d',j);
+        title(title_string,'FontSize',14);
+    end
+end
+
+return;
+
 %% use GPML on a 2-D example, generated using GPML sampling
 % ell = 10; sf = 15; sn = 0.1; % sn must be nonzero to avoid not-positive-definite errors in GPML code
 % meanfunc = @meanConst; hyp.mean = 50;
@@ -44,31 +133,58 @@ load('./map_0001')
 % title('A priori hyperparameters');
 % set(gca, 'FontSize', 14)
 
-%% APPLY ILGPR TO APPROXIMATE THE A PRIORI FULL GP
-N = 400; % maximum number of sample locations
-Xz = 20+5*gpml_randn(rand(1), N, 2)'; % predetermined random set of sample locations, note that each X is a column vector
-Xz(Xz > 40) = 40;
-Xz(Xz < 1) = 1;
-predictionX = heatmap(:,1:2)'; % note that each X is a column vector
-predictionZ = zeros(size(predictionX,1),1); % assume value is 0
-predictionS = 10*ones(size(predictionX,1),1); % assume +/- 10
-ilgpr = ILGPR(predictionX,predictionZ,predictionS); % the ILGPR object
-myInterpolant = griddedInterpolant(X,Y,heatmap_grid,'cubic');
+% %% APPLY ILGPR TO APPROXIMATE THE A PRIORI FULL GP
+% N = 1000; % maximum number of sample locations
+% Xz = 20+10*gpml_randn(rand(1), N, 2)'; % predetermined random set of sample locations, note that each X is a column vector
+% Xz(Xz > 40) = 40;
+% Xz(Xz < 1) = 1;
+% predictionX = heatmap(:,1:2)'; % note that each X is a column vector
+% predictionZ = zeros(size(predictionX,1),1); % assume value is 0
+% predictionS = 10*ones(size(predictionX,1),1); % assume +/- 10
+% ilgpr = ILGPR(predictionX,predictionZ,predictionS); % the ILGPR object
+% myInterpolant = griddedInterpolant(X,Y,heatmap_grid,'cubic');
+% 
+% datum = cell(size(predictionX,1),1); % training data
+% train_error = zeros(size(predictionX,1),1); % training error
+% for j = 1:N
+%     fprintf('Adding training point %d\n',j);
+%     x = Xz(:,j);
+%     z = myInterpolant(x(1),x(2));
+%     datum{j} = Datum(x,z,j);
+%     ilgpr.newDatum(datum{j});
+% end
+% 
+% % training set prediction
+% predictionZ = zeros(N,1);
+% predictionS = zeros(N,1);
+% for j = 1:N    
+%     fprintf('Evaluating error at training point %d\n',j);
+%     x = datum{j}.getX();
+%     [predictionZ(j),predictionS(j)] = ilgpr.predict(x);
+%     train_error(j) = datum{j}.getZ() - predictionZ(j);
+% %     disp(sprintf('Training Evaluation, Data at [%f,%f] = %f, Prediction = %f, Error = %f\n',x(1),x(2),datum{j}.getZ(),predictionZ(j),train_error(j)));
+% end
+% surf(X,Y,heatmap_grid); hold on;
+% plot3(Xz(1,:),Xz(2,:),predictionZ,'k+','MarkerSize',5,'LineWidth',3);
+% plot3(Xz(1,:),Xz(2,:),predictionS,'+','Color',[0.7 0.7 0.7],'MarkerSize',5,'LineWidth',3);
+% for j = 1:ilgpr.nLGPs
+%     plot3(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2),myInterpolant(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2)),'ms','MarkerSize',10,'LineWidth',5);
+% end
 
-datum = cell(size(predictionX,1),1); % training data
-for j = 1:N
-    x = Xz(:,j);
-    z = myInterpolant(x(1),x(2));
-    datum{j} = Datum(x,z,j);
-    ilgpr.newDatum(datum{j});
-end
+
+
+
+
+
+
+return; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Test prediction on training set
 train_label = zeros(N,1); % trainting label
 train_pred = zeros(N,1); % trainting prediction
 for j = 1:N
     train_label(j) = datum{j}.getZ();
-    train_pred(j) = ilgpr.predict(datum{j});
+    train_pred(j) = ilgpr.predict(datum{j}.getX());
 end
 train_error = train_label-train_pred; % training error
 train_mse = mean((train_label-train_pred).^2); % MSE of training data
@@ -87,7 +203,7 @@ for j = 1:N_test
     x = Xz_test(:,j);
     test_label(j) = myInterpolant(x(1),x(2));
     datum = Datum(x,z,j);
-    test_pred(j) = ilgpr.predict(datum);
+    test_pred(j) = ilgpr.predict(datum.getX());
 end
 test_error = test_label-test_pred; % testing error
 test_mse = mean((test_label-test_pred).^2); % MSE of testing data

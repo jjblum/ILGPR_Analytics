@@ -10,8 +10,7 @@ classdef ILGPR < handle
         predictionX % grid of prediction locations
         predictionZ % avg. at prediction X
         predictionS % std dev. at prediction X
-        spSum % sum of LGP's activations
-        mcfSum % sum of mixture components
+        fSum % sum of the weights
         newLGPCutoff % likelihood below which a new LGP will be added
         M % the maximum number of LGP models used in the prediction
     end
@@ -23,9 +22,9 @@ classdef ILGPR < handle
             obj.predictionX = predictionX;
             obj.predictionZ = predictionZ;
             obj.predictionS = predictionS;
-            obj.spSum = 0;
-            obj.newLGPCutoff = 0.9; % if the best LGP has nothing better than a 50/50 shot, generate a new LGP
-            obj.M = 5;
+            obj.fSum = 0;
+            obj.newLGPCutoff = 0.1; % if the best LGP has nothing better than a 50/50 shot, generate a new LGP
+            obj.M = 10;
         end       
         
         function newDatum(self,Datum)
@@ -56,7 +55,7 @@ classdef ILGPR < handle
                     % add Datum to LGP with maximum likelihood (not max posterior)                    
                     self.LGPs{bestLGPIdx}.newDatum(Datum);
                     
-                else % the max likelihood is too small, need new LGP 
+                else % the max likelihood is too small, need new LGP
                     addLGP(self,Datum);
                     updateMCs(self);
                 end
@@ -69,11 +68,14 @@ classdef ILGPR < handle
         
         function addLGP(self,Datum)
             self.nLGPs = self.nLGPs + 1;
+            
+            fprintf(' *** Adding new LGP # %d *** \n',self.nLGPs);
+            
             newLGP = LGP(self.nLGPs,Datum);            
             self.LGPs{self.nLGPs} = newLGP;
         end        
         
-        function weightedZ = predict(self,x)             
+        function [weightedZ,weightedS] = predict(self,x)             
             numStarted = 0;
             validLGPIdx = [];
             
@@ -99,24 +101,27 @@ classdef ILGPR < handle
             likelihoodsIdx = validLGPIdx;
             for i = 1:numStarted
                 validIndex = likelihoodsIdx(i);
-                self.LGPs{validIndex}.updateF(x.getX());
+                self.LGPs{validIndex}.updateF(x);
                 likelihoods(i) = self.LGPs{validIndex}.getF();
             end
 
             % M closest local models, user-defined.
             [sortedlikelihoods, sortlikelihoodsIdx] = sort(likelihoods,'descend');
 
-            predictY = zeros(numPredictLGP,1);
+            predictZ = zeros(numPredictLGP,1);
+            predictS = zeros(numPredictLGP,1);
             sortedMC = zeros(numPredictLGP,1); % pi_k in paper
             sortedF = sortedlikelihoods(1:numPredictLGP); % w_k in paper
             for i = 1:numPredictLGP
-                predictY(i) = self.LGPs{likelihoodsIdx(sortlikelihoodsIdx(i))}.predict(x.getX());   
+                [predictZ(i),predictS(i)] = self.LGPs{likelihoodsIdx(sortlikelihoodsIdx(i))}.predict(x);
                 sortedMC(i) = self.LGPs{likelihoodsIdx(sortlikelihoodsIdx(i))}.getMC();
             end
+                        
+%             keyboard %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             % Clustering to filter the outlier prediction data
             % Assuming only few outliers, so choose k=2
-            clusteringIdx = kmeans(predictY,2);
+            clusteringIdx = kmeans(predictZ,2);
             if sum(clusteringIdx==1) > sum(clusteringIdx==2)
                 ultimateIdx = (clusteringIdx==1);
             else
@@ -124,7 +129,9 @@ classdef ILGPR < handle
             end
             
             sortedMCF = sortedMC(ultimateIdx).*sortedF(ultimateIdx); % pi_k*w_k, coefficient before \hat{y_k}
-            weightedZ = sortedMCF'*predictY(ultimateIdx)/sum(sortedMCF);
+            weightedZ = sortedMCF'*predictZ(ultimateIdx)/sum(sortedMCF);
+            weightedS = sortedMCF'*predictS(ultimateIdx)/sum(sortedMCF);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         
         function updateCenters(self,Datum,posteriors)
