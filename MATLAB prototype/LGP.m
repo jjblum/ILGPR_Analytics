@@ -7,6 +7,7 @@ classdef LGP < handle
     
     properties
         X        % data locations matrix
+        D        % domain dimensions 1D, 2D, etc.
         Z        % data value vector
         Zmean    % mean of input data
         W        % length scale matrix
@@ -20,6 +21,7 @@ classdef LGP < handle
         NMAX     % maximum number of training points
         NSTART   % number of points needed before computation actually begins
         started  % boolean, false while N < NSTART
+        preppedForPredict % boolean, false until first predict() call
         data     % vector of Datum objects
         f        % most recent likelihood result
         ID       % the index of the LGP itself (order of creation)
@@ -30,24 +32,32 @@ classdef LGP < handle
         function obj = LGP(ID,Datum)            
             obj.ID = ID;
             obj.X = Datum.getX();
+            obj.D = size(obj.X,1);
             obj.Z = Datum.getZ();
             obj.Zmean = mean(obj.Z);
             obj.Z = obj.Z - obj.Zmean;
-            obj.hyp.mean = 0;
-            obj.hyp.cov = [log(1) log(1)]'; % log(length scale 1), log(length scale 2), log(process variability)
-            obj.hyp.lik = log(1); % sigma_n, noise in sensor
+            obj.hyp.mean = 0; % used with Z after Zmean is removed, so should be 0
+            if obj.D == 1
+                obj.hyp.cov = [log(1) log(1)]'; % log(length scale 1), log(process variability)            
+            elseif obj.D == 2
+                obj.hyp.cov = [log(5) log(5) log(1)]'; % log(length scale 1), log(length scale 2), log(process variability)            
+            end
+            obj.hyp.lik = log(0.1); % sigma_n, noise in sensor
             obj.W = diag((1./exp(obj.hyp.cov(1:end-1))).^2);
             obj.u = Datum.getX();
             obj.R = [];
             obj.K = [];
+            obj.invK = [];
             obj.L = [];
             obj.N = 1;
             obj.NMAX = 100;
             obj.NSTART = 10;
             obj.started = 0;
+            obj.preppedForPredict = 0;
             obj.data = cell(1,1);
             obj.data{1} = Datum;
             obj.f = 0;
+            
         end
         
         function newDatum(self,Datum)
@@ -59,29 +69,42 @@ classdef LGP < handle
             choleskyUpdate(self);
         end
         
+        function prepForPredict(self)
+            % THINGS THAT ARE USED FOR EVERY SINGLE PREDICTION
+            optimizeHyperparameters(self,100);
+            self.invK = self.L'\inv(self.L);
+        end
+        
         function [zHat, sHat] = predict(self,x)
+            
+            if self.preppedForPredict == 0
+                prepForPredict(self); % only want to run this once
+                self.preppedForPredict = 1;
+            end
+            
             Xx = horzcat(self.X,x);
             a = bsxfun(@minus,Xx,mean(Xx,2));
             oldX = a(:,1:end-1);
             newX = a(:,end);
             K_new = self.covarianceVector(oldX,newX);
-%             zHat = K_new'*self.alpha;
-            zHat = K_new'*self.alpha + self.Zmean;
-            
             k_new = exp(self.hyp.cov(end))^2 + exp(self.hyp.lik) + 1e-5;
-%             KinvRowsVector = kron(eye(length(self.alpha)),self.Z')\self.alpha;
-%             KinvMatrix = reshape(KinvRowsVector,length(self.alpha),length(self.alpha))'; % note the last transpose
-            % this KinvMatrix is NOT unique. So I don't know if we can actually use it. Probably not.
-            KinvMatrixByChol = self.L'\inv(self.L);           
-            sHat = k_new - K_new'*KinvMatrixByChol*K_new;        
+            
+            if max(K_new(:)) < 1e-4 %%%%%%% speed increase idea: if max K_new is very small, just say zHat = self.Zmean and sHat = k_new
+                zHat = self.Zmean;
+                sHat = k_new;
+                return;
+            end
+            
+            zHat = K_new'*self.alpha + self.Zmean;                     
+            sHat = k_new - K_new'*self.invK*K_new;        
         end        
         
-        function optimizeHyperparameters(self)  
+        function optimizeHyperparameters(self,iter)   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NOW ALLOWS FOR ITERATION SPECIFICATION, RECREATES L EACH TIME!!!
             covfunc = @covSEard;
             meanfunc = @meanConst; 
             likfunc = @likGauss;
             self.hyp.mean = mean(self.Z); % guess that mean function is just the mean of the training data
-            [self.hyp, f_log, iterations] = minimize(self.hyp, @gp, -50, @infExact, meanfunc, covfunc, likfunc, self.X', self.Z);
+            [self.hyp, f_log, iterations] = minimize(self.hyp, @gp, -iter, @infExact, meanfunc, covfunc, likfunc, self.X', self.Z);
             self.W = diag((1./exp(self.hyp.cov(1:end-1))).^2);
             firstCholesky(self);
         end        
@@ -90,11 +113,11 @@ classdef LGP < handle
             self.X = horzcat(self.X,x);            
         end
         
-        function updateZ(self, z)
-            self.Z = self.Z + self.Zmean; %%%%%%%%%%%%%%
-            self.Z = vertcat(self.Z,z); %%%%%%%%%%%%%%
-            self.Zmean = mean(self.Z); %%%%%%%%%%%%%%
-            self.Z = self.Z - self.Zmean; %%%%%%%%%%%%%%
+        function updateZ(self, z) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NOW AUTO-REMOVES MEAN
+            self.Z = self.Z + self.Zmean;
+            self.Z = vertcat(self.Z,z); 
+            self.Zmean = mean(self.Z); 
+            self.Z = self.Z - self.Zmean; 
         end
         
         function getR(self, m)
@@ -118,15 +141,15 @@ classdef LGP < handle
                 % the incremental cholesky update without removal
                 
                 % update L
-                self.incrementalCholeskyUpdate();                
+                incrementalCholeskyUpdate(self);
                 
             end
-            self.optimizeHyperparameters();
+            optimizeHyperparameters(self,1);
         end                
         
         function K_new = covarianceVector(self,oldX,newX)
             oldX_minus_newX = bsxfun(@minus,oldX,newX);
-            K_new = exp(self.hyp.cov(end))^2*exp(-1/2*sum(oldX_minus_newX'*self.W.*oldX_minus_newX',2));            
+            K_new = exp(self.hyp.cov(end))^2*exp(-1/2*sum(oldX_minus_newX'*self.W.*oldX_minus_newX',2));
         end
         
         function incrementalCholeskyUpdate(self)

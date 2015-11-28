@@ -5,14 +5,13 @@ clc
 addpath(genpath('./gpml-v3.5')); startup;
 addpath(genpath('./freezeColors'));
 
-% load('./map_0001')
-
-ground_truth_mean = 5;
+%% 1D sine wave example
+ground_truth_mean = 15;
 ground_truth = @(x) sin(x) + ground_truth_mean;
-noisy_func = @(x) ground_truth(x) + 0.05*randn(size(x));
+noisy_func = @(x) ground_truth(x) + 0.5*randn(size(x));
 
-x_all = (0:0.01:20)';
-x_fraction = 40;
+x_all = (0:0.01:40)';
+x_fraction = 10;
 sparse_x = x_all(sort(randperm(length(x_all),round(length(x_all)/x_fraction)),'ascend'));
 y = noisy_func(sparse_x);
 
@@ -40,7 +39,7 @@ end
 temp = [ilgpr.LGPs{:}];
 temp = temp(vertcat(temp.started)==1);
 temp2 = [temp.hyp];
-hyp_cov = exp(horzcat(temp2.cov));
+hyp_cov = exp(horzcat(temp2.cov))
 PLOT_COUNT = 1 + length(temp);
 PLOT_COLS = 3;
 PLOT_ROWS = ceil(PLOT_COUNT/PLOT_COLS);
@@ -61,10 +60,18 @@ for j = 1:ilgpr.nLGPs
 end
 hold off
 
+n = 0;
 for j = 1:ilgpr.nLGPs
     if ilgpr.LGPs{j}.started == 1
-        subplot(PLOT_ROWS,PLOT_COLS,1+j)
+        n = n+1;
+        subplot(PLOT_ROWS,PLOT_COLS,1+n)
         LGP = ilgpr.LGPs{j};
+        
+%         if exp(LGP.hyp.cov(2)) < 0.1
+%             keyboard
+%         end
+        
+        
 %         figure
         hold on
         plot(x_all,ground_truth(x_all),'b--');
@@ -80,16 +87,14 @@ for j = 1:ilgpr.nLGPs
         plot(local_x_all,local_predictionZ + 2*local_predictionS,'c-','LineWidth',2)
         plot(local_x_all,local_predictionZ - 2*local_predictionS,'c-','LineWidth',2)
         axis([min(x_all), max(x_all) -2+ground_truth_mean 2+ground_truth_mean])
+        title_string = sprintf('LGP # %d',j);
+        title(title_string,'FontSize',14);
     end
 end
 
-
-
-
-
 return;
 
-% %% use GPML on a 2-D example, generated using GPML sampling
+%% use GPML on a 2-D example, generated using GPML sampling
 % ell = 10; sf = 15; sn = 0.1; % sn must be nonzero to avoid not-positive-definite errors in GPML code
 % meanfunc = @meanConst; hyp.mean = 50;
 % covfunc = @covSEiso; hyp.cov = log([ell; sf]);
@@ -127,8 +132,9 @@ return;
 % title('A priori hyperparameters');
 % set(gca, 'FontSize', 14)
 
-%% APPLY ILGPR TO APPROXIMATE THE A PRIORI FULL GP
-N = 100; % maximum number of sample locations
+%% 2D example, premade map
+load('./map_0001')
+N = 400; % maximum number of sample locations
 Xz = 20+10*gpml_randn(rand(1), N, 2)'; % predetermined random set of sample locations, note that each X is a column vector
 Xz(Xz > 40) = 40;
 Xz(Xz < 1) = 1;
@@ -183,11 +189,11 @@ hold on
 freezeColors
 colormap('winter');
 surf(X,Y,reshape(test_Z,size(X)),'EdgeColor',[0.7 0.7 0.7]) % the prediction surface
-% freezeColors
-% colormap([0.8 0.8 0.8]);
-% surf(X,Y,reshape(test_Z + 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
-% surf(X,Y,reshape(test_Z - 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
-% freezeColors
+freezeColors
+colormap([0.8 0.8 0.8]);
+surf(X,Y,reshape(test_Z + 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
+surf(X,Y,reshape(test_Z - 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
+freezeColors
 hold off
 
 
