@@ -92,30 +92,37 @@ classdef LGP < handle
         
         function [zHat, sHat] = predict(self,x)
             
-            k_new = exp(self.hyp.cov(end))^2 + exp(self.hyp.lik) + 1e-5;
-            if self.started
-                if self.preppedForPredict == 0
-                    prepForPredict(self); % only want to run this once
-                    self.preppedForPredict = 1;
-                end
+            try
+            
+                k_new = exp(self.hyp.cov(end))^2 + exp(self.hyp.lik) + 1e-5;
+                if self.started
+%                     if self.preppedForPredict == 0
+                        prepForPredict(self);
+%                         self.preppedForPredict = 1;
+%                     end
 
-                Xx = horzcat(self.X,x);
-                a = bsxfun(@minus,Xx,mean(Xx,2));
-                oldX = a(:,1:end-1);
-                newX = a(:,end);
-                K_new = self.covarianceVector(oldX,newX);
-                
-                if max(K_new(:)) < 1e-4 %%%%%%% speed increase idea: if max K_new is very small, just say zHat = self.Zmean and sHat = k_new
-                    zHat = self.Zmean;
+                    Xx = horzcat(self.X,x);
+                    a = bsxfun(@minus,Xx,mean(Xx,2));
+                    oldX = a(:,1:end-1);
+                    newX = a(:,end);
+                    K_new = self.covarianceVector(oldX,newX);
+
+                    if max(K_new(:)) < 1e-4 %%%%%%% speed increase idea: if max K_new is very small, just say zHat = self.Zmean and sHat = k_new
+                        zHat = self.Zmean;
+                        sHat = k_new;
+                        return;
+                    end
+
+                    zHat = K_new'*self.alpha + self.Zmean;                     
+                    sHat = k_new - K_new'*self.invK*K_new;    
+                else                
+                    zHat = self.Zmean;                     
                     sHat = k_new;
-                    return;
                 end
-
-                zHat = K_new'*self.alpha + self.Zmean;                     
-                sHat = k_new - K_new'*self.invK*K_new;    
-            else                
-                zHat = self.Zmean;                     
-                sHat = k_new;
+            
+            catch e
+                disp(e);
+                keyboard;
             end
             
             

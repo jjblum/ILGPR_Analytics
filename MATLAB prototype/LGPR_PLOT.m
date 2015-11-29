@@ -17,7 +17,7 @@ function LGPR_PLOT(X,Y,Interpolant,X_train,Z_prediction,S_prediction,ilgpr,inclu
     
     plot3(X_train(1,:),X_train(2,:),Z_train,'k+','MarkerSize',5,'LineWidth',3); % training data
     hold on
-    freezeColors
+%     freezeColors
     colormap('winter');
     surf(X,Y,reshape(Z_prediction,size(X)),'EdgeColor',[0.7 0.7 0.7],'FaceAlpha',0.75,'EdgeAlpha',0.2) % the prediction surface
     freezeColors

@@ -4,6 +4,7 @@ clc
 
 addpath(genpath('./gpml-v3.5')); startup;
 addpath(genpath('./freezeColors'));
+addpath(genpath('./subplot_tight'));
 
 %% 1D sine wave example
 % ground_truth_mean = 15;
@@ -36,6 +37,11 @@ addpath(genpath('./freezeColors'));
 %     [predictionZ(j),predictionS(j)] = ilgpr.predict(x);
 % end
 % 
+% 
+% for j = 1:ilgpr.nLGPs
+%     ilgpr.LGPs{j}.reOptimizeHyperparameters();
+% end
+% 
 % temp = [ilgpr.LGPs{:}];
 % temp = temp(vertcat(temp.started)==1);
 % temp2 = [temp.hyp];
@@ -43,6 +49,8 @@ addpath(genpath('./freezeColors'));
 % PLOT_COUNT = 1 + length(temp);
 % PLOT_COLS = 3;
 % PLOT_ROWS = ceil(PLOT_COUNT/PLOT_COLS);
+% 
+% 
 % 
 % figure;
 % subplot(PLOT_ROWS,PLOT_COLS,1)
@@ -64,7 +72,7 @@ addpath(genpath('./freezeColors'));
 % for j = 1:ilgpr.nLGPs
 %     if ilgpr.LGPs{j}.started == 1
 %         n = n+1;
-%         subplot(PLOT_ROWS,PLOT_COLS,1+n)
+%         subplot_tight(PLOT_ROWS,PLOT_COLS,1+n)
 %         LGP = ilgpr.LGPs{j};
 %         
 % %         if exp(LGP.hyp.cov(2)) < 0.1
@@ -87,8 +95,8 @@ addpath(genpath('./freezeColors'));
 %         plot(local_x_all,local_predictionZ + 2*local_predictionS,'c-','LineWidth',2)
 %         plot(local_x_all,local_predictionZ - 2*local_predictionS,'c-','LineWidth',2)
 %         axis([min(x_all), max(x_all) -2+ground_truth_mean 2+ground_truth_mean])
-%         title_string = sprintf('LGP # %d',j);
-%         title(title_string,'FontSize',14);
+% %         title_string = sprintf('LGP # %d',j);
+% %         title(title_string,'FontSize',14);
 %     end
 % end
 % 
@@ -137,7 +145,7 @@ load('./map_0001')
 heatmap_grid = heatmap_grid + 200; % offset upward to check algorithm mean prediction
 
 
-N = 400; % maximum number of sample locations
+N = 200; % maximum number of sample locations
 Xz = 20+10*gpml_randn(rand(1), N, 2)'; % predetermined random set of sample locations, note that each X is a column vector
 Xz(Xz > 40) = 40;
 Xz(Xz < 1) = 1;
@@ -171,29 +179,42 @@ fprintf('sMSE = %.4f\n',sMSE);
 % title('BEFORE Hyperparameter Re-Optimization','FontSize',20)
 
 % re-optimize hyperparameters from scratch to make sure you don't have crazy GPs -- note that this may not be necessary
-% for j = 1:ilgpr.nLGPs
-%     ilgpr.LGPs{j}.reOptimizeHyperparameters();
-% end
+for j = 1:ilgpr.nLGPs
+    ilgpr.LGPs{j}.reOptimizeHyperparameters();
+end
 % w2 = figure;
 % LGPR_PLOT(X,Y,myInterpolant,Xz,Z_test,S_test,ilgpr,1,w2);
 % title('AFTER Hyperparameter Re-Optimization','FontSize',20)
 
 % load junk
 
+%set(0,'defaultfigurecolor',[1 1 1])
 w3 = figure;
-title(sprintf('sMSE = %.4f',sMSE));
+set(w3,'Position',[66 1081 1855 1031]);
+set(w3,'color',[1 1 1])
+mTextBox = uicontrol('style','text');
+set(mTextBox,'String',sprintf('sMSE = %.4f',sMSE));
+set(mTextBox,'FontSize',30);
+set(mTextBox,'Position',[60 970 300 50])
+set(mTextBox,'BackgroundColor',[1 1 1])
 LGPR_PLOT(X,Y,myInterpolant,Xz,Z_test,S_test,ilgpr,1,w3,4,4,[1,2,5,6]);
 
 
-subplots = [3, 4, 7, 8, 9:16];
+% subplots = [3, 4, 7, 8, 9:16];
+subplots = 7:16;
+
+% sort the LGPs by the number of points assigned to them
+temp = [ilgpr.LGPs{:}];
+all_N = [temp.N];
+[sorted_N, sorted_N_index] = sort(all_N,'descend');
 
 for j = 1:min(ilgpr.nLGPs,length(subplots))
     
     fprintf('Generating plot for LGP # %d of %d\n',j,min(ilgpr.nLGPs,length(subplots)));
-    
+        
     LGPs_temp = cell(1,1);
-    LGPs_temp{1} = ilgpr.LGPs{j};
-    Xz = ilgpr.LGPs{j}.getX();
+    LGPs_temp{1} = ilgpr.LGPs{sorted_N_index(j)};
+    Xz = ilgpr.LGPs{sorted_N_index(j)}.getX();
     ilgpr_temp = ILGPR(predictionX,predictionZ,predictionS); % the ILGPR object
     ilgpr_temp.setLGPs(1,LGPs_temp);
     

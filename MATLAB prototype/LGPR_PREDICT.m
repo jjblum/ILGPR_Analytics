@@ -16,5 +16,4 @@ function [sMSE,Z_test,S_test] = LGPR_PREDICT(ilgpr,X_test,Interpolant)
     true_z = Interpolant(X_test(1,:)',X_test(2,:)');
     sMSE = mean(test_error.^2)/std(true_z)^2;
     sMSE_baseline = mean((mean(true_z)-true_z).^2)/std(true_z)^2;
-
 end
