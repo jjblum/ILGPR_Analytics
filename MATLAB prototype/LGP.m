@@ -40,7 +40,7 @@ classdef LGP < handle
             if obj.D == 1
                 obj.hyp.cov = [log(1) log(1)]'; % log(length scale 1), log(process variability)            
             elseif obj.D == 2
-                obj.hyp.cov = [log(5) log(5) log(1)]'; % log(length scale 1), log(length scale 2), log(process variability)            
+                obj.hyp.cov = [log(5) log(5) log(2)]'; % log(length scale 1), log(length scale 2), log(process variability)            
             end
             obj.hyp.lik = log(0.1); % sigma_n, noise in sensor
             obj.W = diag((1./exp(obj.hyp.cov(1:end-1))).^2);
@@ -51,7 +51,7 @@ classdef LGP < handle
             obj.L = [];
             obj.N = 1;
             obj.NMAX = 100;
-            obj.NSTART = 10;
+            obj.NSTART = 3;
             obj.started = 0;
             obj.preppedForPredict = 0;
             obj.data = cell(1,1);
@@ -69,34 +69,52 @@ classdef LGP < handle
             choleskyUpdate(self);
         end
         
+        function reOptimizeHyperparameters(self)
+            if self.D == 1
+                self.hyp.cov = [log(1) log(1)]'; % log(length scale 1), log(process variability)            
+            elseif self.D == 2
+                self.hyp.cov = [log(5) log(5) log(2)]'; % log(length scale 1), log(length scale 2), log(process variability)            
+            end
+            if self.started
+                optimizeHyperparameters(self,100);
+                prepForPredict(self);
+            end
+        end
+        
         function prepForPredict(self)
-            % THINGS THAT ARE USED FOR EVERY SINGLE PREDICTION
-            optimizeHyperparameters(self,100);
+%             % THINGS THAT ARE USED FOR EVERY SINGLE PREDICTION
             self.invK = self.L'\inv(self.L);
         end
         
         function [zHat, sHat] = predict(self,x)
             
-            if self.preppedForPredict == 0
-                prepForPredict(self); % only want to run this once
-                self.preppedForPredict = 1;
-            end
-            
-            Xx = horzcat(self.X,x);
-            a = bsxfun(@minus,Xx,mean(Xx,2));
-            oldX = a(:,1:end-1);
-            newX = a(:,end);
-            K_new = self.covarianceVector(oldX,newX);
             k_new = exp(self.hyp.cov(end))^2 + exp(self.hyp.lik) + 1e-5;
-            
-            if max(K_new(:)) < 1e-4 %%%%%%% speed increase idea: if max K_new is very small, just say zHat = self.Zmean and sHat = k_new
-                zHat = self.Zmean;
+            if self.started
+                if self.preppedForPredict == 0
+                    prepForPredict(self); % only want to run this once
+                    self.preppedForPredict = 1;
+                end
+
+                Xx = horzcat(self.X,x);
+                a = bsxfun(@minus,Xx,mean(Xx,2));
+                oldX = a(:,1:end-1);
+                newX = a(:,end);
+                K_new = self.covarianceVector(oldX,newX);
+                
+                if max(K_new(:)) < 1e-4 %%%%%%% speed increase idea: if max K_new is very small, just say zHat = self.Zmean and sHat = k_new
+                    zHat = self.Zmean;
+                    sHat = k_new;
+                    return;
+                end
+
+                zHat = K_new'*self.alpha + self.Zmean;                     
+                sHat = k_new - K_new'*self.invK*K_new;    
+            else                
+                zHat = self.Zmean;                     
                 sHat = k_new;
-                return;
             end
             
-            zHat = K_new'*self.alpha + self.Zmean;                     
-            sHat = k_new - K_new'*self.invK*K_new;        
+            
         end        
         
         function optimizeHyperparameters(self,iter)   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NOW ALLOWS FOR ITERATION SPECIFICATION, RECREATES L EACH TIME!!!
@@ -130,21 +148,41 @@ classdef LGP < handle
         
         function choleskyUpdate(self)
             
-            if self.N < self.NSTART
-                return;
-            elseif self.N == self.NSTART
-                firstCholesky(self);    
-                self.started = 1;
-%             elseif self.N > self.NMAX
-                % the incremental cholesky update with removal (Find R and include it)
-            else
-                % the incremental cholesky update without removal
-                
-                % update L
-                incrementalCholeskyUpdate(self);
-                
-            end
-            optimizeHyperparameters(self,1);
+%             if self.D == 1
+                if self.N < self.NSTART
+                    return;
+                elseif self.N == self.NSTART
+                    firstCholesky(self);    
+                    self.started = 1;
+                % elseif self.N > self.NMAX
+                    % the incremental cholesky update with removal (Find R and include it)
+                else
+                    % the incremental cholesky update without removal
+
+                    % update L
+                    incrementalCholeskyUpdate(self);
+
+                end
+%             elseif self.D == 2
+%                 if self.started == 0
+%                     if convexityMeasure(self.X') >= 0.25
+%                         firstCholesky(self);    
+%                         self.started = 1;
+%                     end
+%                     return;
+%                 end
+% 
+%                 %if self.N > self.NMAX
+%                     % the incremental cholesky update with removal (Find R and include it)
+%                 %else
+%                     % the incremental cholesky update without removal
+% 
+%                     % update L
+%                     incrementalCholeskyUpdate(self);
+% 
+%                 %end                
+%             end
+            optimizeHyperparameters(self,5);
         end                
         
         function K_new = covarianceVector(self,oldX,newX)
@@ -191,7 +229,7 @@ classdef LGP < handle
         function firstCholesky(self)
             firstK(self);
             self.L = chol(self.K,'lower');
-            self.alpha = self.K\(self.Z - mean(self.Z)); %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            self.alpha = self.K\self.Z;
         end
         
         function firstK(self)
@@ -222,12 +260,7 @@ classdef LGP < handle
         end
         
         function updateF(self,x)
-            %             keyboard
-            % ratio = norm(x-self.u)*sqrt(self.W(1,1))
-            % rough_f = exp(-1/2*ratio)
             self.f = exp(-1/2*(x-self.u)'*self.W*(x-self.u));
-            % approximately exp(-1/2*[ratio of squared distance to squared length scale]). e.g. if ratio is 5, f ~ 0.1
-            % So if we want a new LGP when more than 2*length scale away, need to set cutoff to about 0.4
         end
         
         function started = isStarted(self)

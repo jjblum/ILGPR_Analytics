@@ -58,49 +58,72 @@ classdef ILGPR < handle
             self.LGPs{self.nLGPs} = newLGP;
         end
         
-        function [weightedZ,weightedS] = predict(self,x)
-            
-            numStarted = 0;
-            validLGPIdx = [];
-            for j=1:self.nLGPs
-                if self.LGPs{j}.isStarted()
-                    numStarted = numStarted + 1;
-                    validLGPIdx = [validLGPIdx j];
-                end
-            end
-
-            if numStarted > self.M
-                numStarted = self.M;
-            end
-            if ~numStarted
-                disp('WARNING: No started LGPs available for prediction');
-                return;
-            end
+        function [weightedZ,weightedS] = predict(self,x)    
             
             self.fSum = 0;
-            for j = validLGPIdx              
+            for j = 1:self.nLGPs              
                 self.LGPs{j}.updateF(x);
                 self.fSum = self.fSum + self.LGPs{j}.getF();
-            end                
-            
-            weights = zeros(numStarted,1);
-            for j = 1:numStarted
-                weights(j) = self.LGPs{validLGPIdx(j)}.getF()/self.fSum;
             end
-            [sortedWeights, sorted_idx] = sort(weights,'descend');
-%             sorted_idx = sorted_idx(1:numStarted);            
-            
-% keyboard
-
+            weights = zeros(self.nLGPs,1);
+            for j = 1:self.nLGPs
+                weights(j) = self.LGPs{j}.getF()/self.fSum;
+            end
             weightedZ = 0;
             weightedS = 0;
-            for j = sorted_idx'
-%                 if self.LGPs{j}.isStarted() % no need to calculate unless it is started (because weight would be zero anyway)
-                    [zHat,sHat] = self.LGPs{validLGPIdx(j)}.predict(x);
+            
+            for j = 1:self.nLGPs
+                if weights(j) > 0.001
+                    [zHat,sHat] = self.LGPs{j}.predict(x);
+                    if zHat < 1
+                        keyboard
+                    end
                     weightedZ = weightedZ + zHat*weights(j);
                     weightedS = weightedS + sHat*weights(j);
+                end
+            end            
+            
+            
+%             numStarted = 0;
+%             validLGPIdx = [];
+%             for j=1:self.nLGPs
+%                 if self.LGPs{j}.isStarted()
+%                     numStarted = numStarted + 1;
+%                     validLGPIdx = [validLGPIdx j];
 %                 end
-            end
+%             end
+%             
+%             if ~numStarted
+%                 disp('WARNING: No started LGPs available for prediction');
+%                 return;
+%             end
+%             
+%             self.fSum = 0;
+%             for j = validLGPIdx              
+%                 self.LGPs{j}.updateF(x);
+%                 self.fSum = self.fSum + self.LGPs{j}.getF();
+%             end                
+%             
+%             weights = zeros(numStarted,1);
+%             for j = 1:numStarted
+%                 weights(j) = self.LGPs{validLGPIdx(j)}.getF()/self.fSum;
+%             end
+%             
+%             [sortedWeights, sorted_idx] = sort(weights,'descend');
+%             sorted_idx = sorted_idx(1:min(self.M,numStarted));            
+% 
+%             weightedZ = 0;
+%             weightedS = 0;
+%             for j = sorted_idx'
+%                 if weights(j) > 0.001
+%                     [zHat,sHat] = self.LGPs{validLGPIdx(j)}.predict(x);
+%                     if zHat < 1
+%                         keyboard
+%                     end
+%                     weightedZ = weightedZ + zHat*weights(j);
+%                     weightedS = weightedS + sHat*weights(j);
+%                 end
+%             end
         end        
              
      

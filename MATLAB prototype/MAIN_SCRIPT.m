@@ -6,93 +6,93 @@ addpath(genpath('./gpml-v3.5')); startup;
 addpath(genpath('./freezeColors'));
 
 %% 1D sine wave example
-ground_truth_mean = 15;
-ground_truth = @(x) sin(x) + ground_truth_mean;
-noisy_func = @(x) ground_truth(x) + 0.5*randn(size(x));
-
-x_all = (0:0.01:40)';
-x_fraction = 10;
-sparse_x = x_all(sort(randperm(length(x_all),round(length(x_all)/x_fraction)),'ascend'));
-y = noisy_func(sparse_x);
-
-predictionX = x_all'; % note that each X is a column vector
-predictionZ = zeros(size(predictionX,1),1); % assume value is 0
-predictionS = 10*ones(size(predictionX,1),1); % assume +/- 10
-ilgpr = ILGPR(predictionX,predictionZ,predictionS); % the ILGPR object
-
-N = length(sparse_x);
-datum = cell(size(predictionX,1),1); % training data
-for j = 1:N
-    x = sparse_x(j);
-    z = y(j);
-    datum{j} = Datum(x,z,j);
-    ilgpr.newDatum(datum{j});
-end
-
-predictionZ = zeros(size(x_all));
-predictionS = zeros(size(x_all));
-for j = 1:length(x_all)
-    x = predictionX(j);
-    [predictionZ(j),predictionS(j)] = ilgpr.predict(x);
-end
-
-temp = [ilgpr.LGPs{:}];
-temp = temp(vertcat(temp.started)==1);
-temp2 = [temp.hyp];
-hyp_cov = exp(horzcat(temp2.cov))
-PLOT_COUNT = 1 + length(temp);
-PLOT_COLS = 3;
-PLOT_ROWS = ceil(PLOT_COUNT/PLOT_COLS);
-
-figure;
-subplot(PLOT_ROWS,PLOT_COLS,1)
-hold on
-% fill([predictionX fliplr(predictionX)],[predictionZ'+2*predictionS' fliplr(predictionZ'-2*predictionS')],'c')
-plot(sparse_x,y,'k+');
-plot(x_all,ground_truth(x_all),'b--');
-plot(predictionX,predictionZ,'r-','LineWidth',2);
-plot(predictionX,predictionZ + 2*predictionS,'c-','LineWidth',2)
-plot(predictionX,predictionZ - 2*predictionS,'c-','LineWidth',2)
-for j = 1:ilgpr.nLGPs
-    if ilgpr.LGPs{j}.started == 1
-        plot(ilgpr.LGPs{j}.u,ilgpr.LGPs{j}.predict(ilgpr.LGPs{j}.u),'ms','MarkerSize',20,'LineWidth',4);
-    end
-end
-hold off
-
-n = 0;
-for j = 1:ilgpr.nLGPs
-    if ilgpr.LGPs{j}.started == 1
-        n = n+1;
-        subplot(PLOT_ROWS,PLOT_COLS,1+n)
-        LGP = ilgpr.LGPs{j};
-        
-%         if exp(LGP.hyp.cov(2)) < 0.1
-%             keyboard
+% ground_truth_mean = 15;
+% ground_truth = @(x) sin(x) + ground_truth_mean;
+% noisy_func = @(x) ground_truth(x) + 0.5*randn(size(x));
+% 
+% x_all = (0:0.01:40)';
+% x_fraction = 10;
+% sparse_x = x_all(sort(randperm(length(x_all),round(length(x_all)/x_fraction)),'ascend'));
+% y = noisy_func(sparse_x);
+% 
+% predictionX = x_all'; % note that each X is a column vector
+% predictionZ = zeros(size(predictionX,1),1); % assume value is 0
+% predictionS = 10*ones(size(predictionX,1),1); % assume +/- 10
+% ilgpr = ILGPR(predictionX,predictionZ,predictionS); % the ILGPR object
+% 
+% N = length(sparse_x);
+% datum = cell(size(predictionX,1),1); % training data
+% for j = 1:N
+%     x = sparse_x(j);
+%     z = y(j);
+%     datum{j} = Datum(x,z,j);
+%     ilgpr.newDatum(datum{j});
+% end
+% 
+% predictionZ = zeros(size(x_all));
+% predictionS = zeros(size(x_all));
+% for j = 1:length(x_all)
+%     x = predictionX(j);
+%     [predictionZ(j),predictionS(j)] = ilgpr.predict(x);
+% end
+% 
+% temp = [ilgpr.LGPs{:}];
+% temp = temp(vertcat(temp.started)==1);
+% temp2 = [temp.hyp];
+% hyp_cov = exp(horzcat(temp2.cov))
+% PLOT_COUNT = 1 + length(temp);
+% PLOT_COLS = 3;
+% PLOT_ROWS = ceil(PLOT_COUNT/PLOT_COLS);
+% 
+% figure;
+% subplot(PLOT_ROWS,PLOT_COLS,1)
+% hold on
+% % fill([predictionX fliplr(predictionX)],[predictionZ'+2*predictionS' fliplr(predictionZ'-2*predictionS')],'c')
+% plot(sparse_x,y,'k+');
+% plot(x_all,ground_truth(x_all),'b--');
+% plot(predictionX,predictionZ,'r-','LineWidth',2);
+% plot(predictionX,predictionZ + 2*predictionS,'c-','LineWidth',2)
+% plot(predictionX,predictionZ - 2*predictionS,'c-','LineWidth',2)
+% for j = 1:ilgpr.nLGPs
+%     if ilgpr.LGPs{j}.started == 1
+%         plot(ilgpr.LGPs{j}.u,ilgpr.LGPs{j}.predict(ilgpr.LGPs{j}.u),'ms','MarkerSize',20,'LineWidth',4);
+%     end
+% end
+% hold off
+% 
+% n = 0;
+% for j = 1:ilgpr.nLGPs
+%     if ilgpr.LGPs{j}.started == 1
+%         n = n+1;
+%         subplot(PLOT_ROWS,PLOT_COLS,1+n)
+%         LGP = ilgpr.LGPs{j};
+%         
+% %         if exp(LGP.hyp.cov(2)) < 0.1
+% %             keyboard
+% %         end
+%         
+%         
+% %         figure
+%         hold on
+%         plot(x_all,ground_truth(x_all),'b--');
+%         plot(LGP.X,LGP.Z+LGP.Zmean,'k+')
+%         plot(LGP.u,LGP.predict(LGP.u),'ms','MarkerSize',20,'LineWidth',4);
+%         local_x_all = linspace(min(LGP.X)-5,max(LGP.X)+5,100);
+%         local_predictionZ = zeros(length(local_x_all),1);
+%         local_predictionS = zeros(length(local_x_all),1);
+%         for jj = 1:length(local_x_all)
+%             [local_predictionZ(jj),local_predictionS(jj)] = LGP.predict(local_x_all(jj));
 %         end
-        
-        
-%         figure
-        hold on
-        plot(x_all,ground_truth(x_all),'b--');
-        plot(LGP.X,LGP.Z+LGP.Zmean,'k+')
-        plot(LGP.u,LGP.predict(LGP.u),'ms','MarkerSize',20,'LineWidth',4);
-        local_x_all = linspace(min(LGP.X)-5,max(LGP.X)+5,100);
-        local_predictionZ = zeros(length(local_x_all),1);
-        local_predictionS = zeros(length(local_x_all),1);
-        for jj = 1:length(local_x_all)
-            [local_predictionZ(jj),local_predictionS(jj)] = LGP.predict(local_x_all(jj));
-        end
-        plot(local_x_all,local_predictionZ,'r-','LineWidth',2)
-        plot(local_x_all,local_predictionZ + 2*local_predictionS,'c-','LineWidth',2)
-        plot(local_x_all,local_predictionZ - 2*local_predictionS,'c-','LineWidth',2)
-        axis([min(x_all), max(x_all) -2+ground_truth_mean 2+ground_truth_mean])
-        title_string = sprintf('LGP # %d',j);
-        title(title_string,'FontSize',14);
-    end
-end
-
-return;
+%         plot(local_x_all,local_predictionZ,'r-','LineWidth',2)
+%         plot(local_x_all,local_predictionZ + 2*local_predictionS,'c-','LineWidth',2)
+%         plot(local_x_all,local_predictionZ - 2*local_predictionS,'c-','LineWidth',2)
+%         axis([min(x_all), max(x_all) -2+ground_truth_mean 2+ground_truth_mean])
+%         title_string = sprintf('LGP # %d',j);
+%         title(title_string,'FontSize',14);
+%     end
+% end
+% 
+% return;
 
 %% use GPML on a 2-D example, generated using GPML sampling
 % ell = 10; sf = 15; sn = 0.1; % sn must be nonzero to avoid not-positive-definite errors in GPML code
@@ -134,6 +134,9 @@ return;
 
 %% 2D example, premade map
 load('./map_0001')
+heatmap_grid = heatmap_grid + 200; % offset upward to check algorithm mean prediction
+
+
 N = 400; % maximum number of sample locations
 Xz = 20+10*gpml_randn(rand(1), N, 2)'; % predetermined random set of sample locations, note that each X is a column vector
 Xz(Xz > 40) = 40;
@@ -147,11 +150,14 @@ myInterpolant = griddedInterpolant(X,Y,heatmap_grid,'cubic');
 datum = cell(size(predictionX,1),1); % training data
 train_error = zeros(size(predictionX,1),1); % training error
 for j = 1:N
+    fprintf('Adding training datum # %d of %d\n',j,N); 
     x = Xz(:,j);
     z = myInterpolant(x(1),x(2));
     datum{j} = Datum(x,z,j);
     ilgpr.newDatum(datum{j});
 end
+
+% load junk.mat
 
 % % training set prediction
 % predictionZ = zeros(N,1);
@@ -169,32 +175,72 @@ end
 %     plot3(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2),myInterpolant(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2)),'ms','MarkerSize',10,'LineWidth',5);
 % end
 
-% test prediction on entire grid
-Xz_test = predictionX;
-N_test = size(Xz_test,2);
-test_error = zeros(size(Xz_test,2),1); % training error
-test_Z = zeros(size(Xz_test,2),1);
-test_S = zeros(size(Xz_test,2),1);
-for j = 1:N_test
-    x = Xz_test(:,j);
-    z = myInterpolant(x(1),x(2));
-    datum_test = Datum(x,z,j);
-    [test_Z(j),test_S(j)] = ilgpr.predict(datum_test.getX());
-    test_error(j) = test_Z(j) - z;
-end
+temp = [ilgpr.LGPs{:}];
+temp = temp(vertcat(temp.started)==1);
+temp2 = [temp.hyp];
+hyp_cov = exp(horzcat(temp2.cov))
 
-figure
-plot3(Xz(1,:),Xz(2,:),myInterpolant(Xz(1,:),Xz(2,:)),'k+','MarkerSize',5,'LineWidth',3); % training data
-hold on
-freezeColors
-colormap('winter');
-surf(X,Y,reshape(test_Z,size(X)),'EdgeColor',[0.7 0.7 0.7]) % the prediction surface
-freezeColors
-colormap([0.8 0.8 0.8]);
-surf(X,Y,reshape(test_Z + 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
-surf(X,Y,reshape(test_Z - 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
-freezeColors
-hold off
+% % test prediction on entire grid
+% Xz_test = predictionX;
+% N_test = size(Xz_test,2);
+% test_error = zeros(size(Xz_test,2),1); % training error
+% test_Z = zeros(size(Xz_test,2),1);
+% test_S = zeros(size(Xz_test,2),1);
+% for j = 1:N_test
+%     x = Xz_test(:,j);
+%     z = myInterpolant(x(1),x(2));
+%     datum_test = Datum(x,z,j);
+%     [test_Z(j),test_S(j)] = ilgpr.predict(datum_test.getX());
+%     test_error(j) = test_Z(j) - z;
+% end
+% true_z = myInterpolant(Xz_test(1,:)',Xz_test(2,:)');
+% sMSE = mean(test_error.^2)/std(true_z)^2;
+% sMSE_baseline = mean((mean(true_z)-true_z).^2)/std(true_z)^2;
+
+[sMSE,Z_test,S_test] = LGPR_PREDICT(ilgpr,predictionX,myInterpolant);
+
+fprintf('sMSE = %.4f\n',sMSE);
+
+w1 = figure;
+LGPR_PLOT(X,Y,myInterpolant,Xz,Z_test,S_test,ilgpr,1,w1);
+title('BEFORE Hyperparameter Re-Optimization','FontSize',20)
+
+% re-optimize hyperparameters from scratch to make sure you don't have crazy GPs -- note that this may not be necessary
+% for j = 1:ilgpr.nLGPs
+%     ilgpr.LGPs{j}.reOptimizeHyperparameters();
+% end
+% w2 = figure;
+% LGPR_PLOT(X,Y,myInterpolant,Xz,Z_test,S_test,ilgpr,1,w2);
+% title('AFTER Hyperparameter Re-Optimization','FontSize',20)
+
+
+
+
+
+% figure
+% plot3(Xz(1,:),Xz(2,:),myInterpolant(Xz(1,:),Xz(2,:)),'k+','MarkerSize',5,'LineWidth',3); % training data
+% hold on
+% freezeColors
+% colormap('winter');
+% surf(X,Y,reshape(test_Z,size(X)),'EdgeColor',[0.7 0.7 0.7]) % the prediction surface
+% freezeColors
+% colormap([0.8 0.8 0.8]);
+% surf(X,Y,reshape(test_Z + 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
+% surf(X,Y,reshape(test_Z - 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
+% freezeColors
+% for j = 1:ilgpr.nLGPs    
+%     if ilgpr.LGPs{j}.started == 1
+%         markerString = 'ms';
+%     else
+%         markerString = 'mx';
+%     end
+%     plot3(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2),myInterpolant(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2)),markerString,'MarkerSize',10,'LineWidth',5);
+% end
+% hold off
+% axis([-inf inf -inf inf min(true_z-10) max(true_z+10)])
+
+
+
 
 
 % figure
