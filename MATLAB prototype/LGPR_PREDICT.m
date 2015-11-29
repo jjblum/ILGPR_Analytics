@@ -7,7 +7,7 @@ function [sMSE,Z_test,S_test] = LGPR_PREDICT(ilgpr,X_test,Interpolant)
     Z_test = zeros(size(X_test,2),1);
     S_test = zeros(size(X_test,2),1);
     for j = 1:N_test
-        fprintf('Evaluating test point # %d of %d\n',j,N_test);
+%         fprintf('Evaluating test point # %d of %d\n',j,N_test);
         x = X_test(:,j);
         z = Interpolant(x(1),x(2));
         [Z_test(j),S_test(j)] = ilgpr.predict(x);

@@ -69,6 +69,10 @@ classdef LGP < handle
             choleskyUpdate(self);
         end
         
+        function X = getX(self)
+            X = self.X;
+        end
+        
         function reOptimizeHyperparameters(self)
             if self.D == 1
                 self.hyp.cov = [log(1) log(1)]'; % log(length scale 1), log(process variability)            

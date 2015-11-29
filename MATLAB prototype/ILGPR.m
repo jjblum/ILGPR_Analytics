@@ -25,7 +25,12 @@ classdef ILGPR < handle
             obj.newLGPCutoff = 0.1;
             obj.M = 10;
             obj.fSum = 0;
-        end       
+        end
+        
+        function setLGPs(self,N,LGPs)
+            self.LGPs = LGPs;
+            self.nLGPs = N;
+        end
         
         function newDatum(self,Datum)
             if self.nLGPs > 0 % there is at least one LGP

@@ -157,53 +157,18 @@ for j = 1:N
     ilgpr.newDatum(datum{j});
 end
 
-% load junk.mat
-
-% % training set prediction
-% predictionZ = zeros(N,1);
-% predictionS = zeros(N,1);
-% for j = 1:N    
-%     x = datum{j}.getX();
-%     [predictionZ(j),predictionS(j)] = ilgpr.predict(x);
-%     train_error(j) = datum{j}.getZ() - predictionZ(j);
-% %     disp(sprintf('Training Evaluation, Data at [%f,%f] = %f, Prediction = %f, Error = %f\n',x(1),x(2),datum{j}.getZ(),predictionZ(j),train_error(j)));
-% end
-% surf(X,Y,heatmap_grid); hold on;
-% plot3(Xz(1,:),Xz(2,:),predictionZ,'k+','MarkerSize',5,'LineWidth',3);
-% % plot3(Xz(1,:),Xz(2,:),predictionS,'+','Color',[0.7 0.7 0.7],'MarkerSize',5,'LineWidth',3);
-% for j = 1:ilgpr.nLGPs
-%     plot3(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2),myInterpolant(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2)),'ms','MarkerSize',10,'LineWidth',5);
-% end
-
 temp = [ilgpr.LGPs{:}];
 temp = temp(vertcat(temp.started)==1);
 temp2 = [temp.hyp];
 hyp_cov = exp(horzcat(temp2.cov))
 
-% % test prediction on entire grid
-% Xz_test = predictionX;
-% N_test = size(Xz_test,2);
-% test_error = zeros(size(Xz_test,2),1); % training error
-% test_Z = zeros(size(Xz_test,2),1);
-% test_S = zeros(size(Xz_test,2),1);
-% for j = 1:N_test
-%     x = Xz_test(:,j);
-%     z = myInterpolant(x(1),x(2));
-%     datum_test = Datum(x,z,j);
-%     [test_Z(j),test_S(j)] = ilgpr.predict(datum_test.getX());
-%     test_error(j) = test_Z(j) - z;
-% end
-% true_z = myInterpolant(Xz_test(1,:)',Xz_test(2,:)');
-% sMSE = mean(test_error.^2)/std(true_z)^2;
-% sMSE_baseline = mean((mean(true_z)-true_z).^2)/std(true_z)^2;
-
 [sMSE,Z_test,S_test] = LGPR_PREDICT(ilgpr,predictionX,myInterpolant);
 
 fprintf('sMSE = %.4f\n',sMSE);
 
-w1 = figure;
-LGPR_PLOT(X,Y,myInterpolant,Xz,Z_test,S_test,ilgpr,1,w1);
-title('BEFORE Hyperparameter Re-Optimization','FontSize',20)
+% w1 = figure;
+% LGPR_PLOT(X,Y,myInterpolant,Xz,Z_test,S_test,ilgpr,1,w1,4,4,[1,2,5,6]);
+% title('BEFORE Hyperparameter Re-Optimization','FontSize',20)
 
 % re-optimize hyperparameters from scratch to make sure you don't have crazy GPs -- note that this may not be necessary
 % for j = 1:ilgpr.nLGPs
@@ -213,34 +178,36 @@ title('BEFORE Hyperparameter Re-Optimization','FontSize',20)
 % LGPR_PLOT(X,Y,myInterpolant,Xz,Z_test,S_test,ilgpr,1,w2);
 % title('AFTER Hyperparameter Re-Optimization','FontSize',20)
 
+% load junk
+
+w3 = figure;
+title(sprintf('sMSE = %.4f',sMSE));
+LGPR_PLOT(X,Y,myInterpolant,Xz,Z_test,S_test,ilgpr,1,w3,4,4,[1,2,5,6]);
 
 
+subplots = [3, 4, 7, 8, 9:16];
 
-
-% figure
-% plot3(Xz(1,:),Xz(2,:),myInterpolant(Xz(1,:),Xz(2,:)),'k+','MarkerSize',5,'LineWidth',3); % training data
-% hold on
-% freezeColors
-% colormap('winter');
-% surf(X,Y,reshape(test_Z,size(X)),'EdgeColor',[0.7 0.7 0.7]) % the prediction surface
-% freezeColors
-% colormap([0.8 0.8 0.8]);
-% surf(X,Y,reshape(test_Z + 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
-% surf(X,Y,reshape(test_Z - 2*test_S,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5)
-% freezeColors
-% for j = 1:ilgpr.nLGPs    
-%     if ilgpr.LGPs{j}.started == 1
-%         markerString = 'ms';
-%     else
-%         markerString = 'mx';
-%     end
-%     plot3(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2),myInterpolant(ilgpr.LGPs{j}.u(1),ilgpr.LGPs{j}.u(2)),markerString,'MarkerSize',10,'LineWidth',5);
-% end
-% hold off
-% axis([-inf inf -inf inf min(true_z-10) max(true_z+10)])
-
-
-
+for j = 1:min(ilgpr.nLGPs,length(subplots))
+    
+    fprintf('Generating plot for LGP # %d of %d\n',j,min(ilgpr.nLGPs,length(subplots)));
+    
+    LGPs_temp = cell(1,1);
+    LGPs_temp{1} = ilgpr.LGPs{j};
+    Xz = ilgpr.LGPs{j}.getX();
+    ilgpr_temp = ILGPR(predictionX,predictionZ,predictionS); % the ILGPR object
+    ilgpr_temp.setLGPs(1,LGPs_temp);
+    
+    x_temp = LGPs_temp{1}.getX();
+    bounding_box_edge = max( max(x_temp(1,:))-min(x_temp(1,:)) , max(x_temp(2,:))-min(x_temp(2,:)) );
+    
+    distances = pdist2(predictionX',LGPs_temp{1}.u');
+    local_predictionX = predictionX(:,distances < bounding_box_edge/2);
+    [localX,localY] = meshgrid(unique(local_predictionX(1,:)'),unique(local_predictionX(2,:)'));
+    local_predictionX = horzcat(localX(:),localY(:))';
+    
+    [sMSE_temp,Z_test_temp,S_test_temp] = LGPR_PREDICT(ilgpr_temp,local_predictionX,myInterpolant);
+    LGPR_PLOT(localX,localY,myInterpolant,Xz,Z_test_temp,S_test_temp,ilgpr_temp,1,w3,4,4,subplots(j));
+end
 
 
 % figure
