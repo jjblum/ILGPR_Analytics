@@ -19,7 +19,16 @@ function LGPR_PLOT(X,Y,Interpolant,X_train,Z_prediction,S_prediction,ilgpr,inclu
     hold on
 %     freezeColors
     colormap('winter');
-    surf(X,Y,reshape(Z_prediction,size(X)),'EdgeColor',[0.7 0.7 0.7],'FaceAlpha',0.75,'EdgeAlpha',0.2) % the prediction surface
+    try
+        surf(X,Y,reshape(Z_prediction,size(X)),'EdgeColor',[0.7 0.7 0.7],'FaceAlpha',0.75,'EdgeAlpha',0.2) % the prediction surface
+    catch e
+        disp('Could not display GP surfaces b/c there was only one point');
+        if include_centers
+            plot_ILGPR_centers(ilgpr,Interpolant,figureHandle);
+        end
+        hold off
+        return;
+    end
     freezeColors
     colormap([0.8 0.8 0.8]);
     surf(X,Y,reshape(Z_prediction + 2*S_prediction,size(X)),'EdgeColor', [0.7 0.7 0.7],'FaceAlpha',0.5,'EdgeAlpha',0.2)

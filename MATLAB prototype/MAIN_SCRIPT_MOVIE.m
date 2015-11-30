@@ -47,8 +47,8 @@ for j = 1:N
 %     mTextBox = uicontrol('style','text');
 %     set(mTextBox,'String',sprintf('sMSE = %.4f',sMSE(j)));
 %     set(mTextBox,'FontSize',30);
-%     set(mTextBox,'Position',[1000 940 300 50]);
-%     set(mTextBox,'BackgroundColor',[1 1 1]);
+%     set(mTextBox,'Position',[1200 950 300 50]);
+%     set(mTextBox,'BackgroundColor',[.9 .9 .9]);
 
     LGPR_PLOT(X,Y,myInterpolant,Xz(:,1:j),Z_test{j},S_test{j},ilgpr,1,w3,4,4,[1,2,5,6]);
     freezeColors;        
@@ -82,13 +82,14 @@ for j = 1:N
         [~,Z_test_temp,S_test_temp] = LGPR_PREDICT(ilgpr_temp,local_predictionX,myInterpolant);
         LGPR_PLOT(localX,localY,myInterpolant,X_train,Z_test_temp,S_test_temp,ilgpr_temp,1,w3,4,4,subplots(g));
     end    
-    
+        
     subplot_tight(4,4,[3 4])
-    semilogy(1:j,sMSE(1:j),'LineWidth',3,'MarkerSize',5);
+    plot(1:j,log(sMSE(1:j)),'rx-','LineWidth',3,'MarkerSize',5);
     hold on
-    semilogy([1 j],[1 1],'b--','LineWidth',3);
+    plot([1 j+1],[0 0],'b--','LineWidth',3);
     hold off
     set(gca,'FontSize',14)    
+    axis([1 j+1 -Inf max(log(sMSE(1:j)))]);
     
     
     F(j) = getframe(w3); % capture a frame for the movie

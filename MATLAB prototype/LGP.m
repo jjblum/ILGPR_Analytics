@@ -51,7 +51,7 @@ classdef LGP < handle
             obj.L = [];
             obj.N = 1;
             obj.NMAX = 100;
-            obj.NSTART = 3;
+            obj.NSTART = 6;
             obj.started = 0;
             obj.preppedForPredict = 0;
             obj.data = cell(1,1);
