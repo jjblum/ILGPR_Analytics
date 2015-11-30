@@ -1,4 +1,4 @@
-function out = filter_area_pts(in_pts, ref_pts)
+function [out, i_keep] = filter_area_pts(in_pts, ref_pts)
 %% FILTER AREA POINTS
 % Given a set of input points, filter out points that do not fall within
 % the closed polygon described by ref_pts.
@@ -56,4 +56,5 @@ for i = 1:size(in_pts,1)
 end
 
 %%
-out = in_pts(x_keep == 1,:);
+i_keep = find(x_keep);
+out = in_pts(i_keep,:);
