@@ -67,12 +67,16 @@ classdef ILGPR < handle
             
             self.fSum = 0;
             for j = 1:self.nLGPs              
-                self.LGPs{j}.updateF(x);
-                self.fSum = self.fSum + self.LGPs{j}.getF();
+                if self.LGPs{j}.isStarted
+                    self.LGPs{j}.updateF(x);
+                    self.fSum = self.fSum + self.LGPs{j}.getF();
+                end
             end
             weights = zeros(self.nLGPs,1);
             for j = 1:self.nLGPs
-                weights(j) = self.LGPs{j}.getF()/self.fSum;
+                if self.LGPs{j}.isStarted
+                    weights(j) = self.LGPs{j}.getF()/self.fSum;
+                end
             end
             weightedZ = 0;
             weightedS = 0;
